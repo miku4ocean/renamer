@@ -1,0 +1,12 @@
+原檔名,原檔案路徑,變更後檔名,變更後檔案路徑,檔案類型,檔案大小 (bytes),最後修改時間
+document.pdf,測試資料夾/document.pdf,IMG_document.pdf,測試資料夾/IMG_document.pdf,application/pdf,1024,2024/03/15 10:30:00
+image.jpg,測試資料夾/image.jpg,IMG_image.jpg,測試資料夾/IMG_image.jpg,image/jpeg,2048,2024/03/16 14:20:00
+report.xlsx,測試資料夾/report.xlsx,IMG_report.xlsx,測試資料夾/IMG_report.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,4096,2024/03/17 09:15:00
+,,,,,,,
+說明：,,,,,,,
+- 原檔名和原檔案路徑由系統自動填入,,,,,,,
+- 變更後檔名可手動編輯或由批次功能產生,,,,,,,
+- 變更後檔案路徑會根據操作類型自動更新,,,,,,,
+- 藍色背景表示檔名有變更,,,,,,,
+- 紅色背景表示檔名重複（需要調整）,,,,,,,
+- 橘色背景表示檔名包含不合法字元,,,,,,,

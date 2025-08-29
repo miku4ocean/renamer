@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Renamer 工具模板</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .sheet { margin-bottom: 40px; }
+        h2 { color: #1976D2; border-bottom: 2px solid #1976D2; padding-bottom: 5px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        .command-table th, .command-table td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        .filelist-table th, .filelist-table td { 
+            border: 1px solid #ddd; 
+            padding: 6px; 
+            text-align: left; 
+            font-size: 14px;
+        }
+        .command-table .label { 
+            background-color: #f5f5f5; 
+            font-weight: bold; 
+            text-align: right; 
+            width: 200px;
+        }
+        .command-table .title { 
+            background-color: #E1F5FE; 
+            font-weight: bold; 
+            text-align: center; 
+            font-size: 16px;
+        }
+        .filelist-table th { 
+            background-color: #1976D2; 
+            color: white; 
+            font-weight: bold; 
+            text-align: center; 
+        }
+        .filelist-table .changed { background-color: #E3F2FD; color: #1976D2; }
+        .note { color: #666; font-size: 12px; margin-top: 10px; }
+        .instructions { background-color: #f9f9f9; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Renamer 工具 - Google Sheets 模板</h1>
+    
+    <div class="instructions">
+        <h3>📋 使用說明</h3>
+        <ol>
+            <li>將此頁面複製到 Google Sheets 中，或者手動建立以下兩個工作表</li>
+            <li>第一個工作表命名為「指令區」</li>
+            <li>第二個工作表命名為「檔名變更區」</li>
+            <li>按照下方的格式設定每個工作表</li>
+        </ol>
+    </div>
+
+    <div class="sheet">
+        <h2>📝 工作表1：指令區</h2>
+        <table class="command-table">
+            <tr>
+                <td class="title" colspan="2">檔案重新命名指令區</td>
+            </tr>
+            <tr>
+                <td class="label">來源資料夾：</td>
+                <td>請輸入資料夾ID或URL</td>
+            </tr>
+            <tr>
+                <td class="label">目標資料夾（複製模式）：</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label">重新命名模式：</td>
+                <td>新增文字</td>
+            </tr>
+            <tr>
+                <td class="label">參數設定：</td>
+                <td>前綴：IMG_</td>
+            </tr>
+            <tr>
+                <td class="label">操作類型：</td>
+                <td>原位置更名</td>
+            </tr>
+        </table>
+        
+        <div class="note">
+            <strong>📌 重要說明：</strong><br>
+            • <strong>來源資料夾</strong>：填入Google Drive資料夾ID或完整URL<br>
+            • <strong>重新命名模式</strong>：新增文字、取代文字、大小寫轉換、新增序號、格式化日期<br>
+            • <strong>參數設定範例</strong>：<br>
+            &nbsp;&nbsp;- 新增文字 → 前綴：IMG_ 或 後綴：_backup<br>
+            &nbsp;&nbsp;- 取代文字 → 部分取代：draft→final<br>
+            &nbsp;&nbsp;- 新增序號 → 前綴序號：1,3 (起始數字1，位數3)<br>
+            &nbsp;&nbsp;- 格式化日期 → 日期格式：YYYY-MM-DD<br>
+            • <strong>操作類型</strong>：原位置更名 或 複製後更名
+        </div>
+    </div>
+
+    <div class="sheet">
+        <h2>📂 工作表2：檔名變更區</h2>
+        <table class="filelist-table">
+            <tr>
+                <th>原檔名</th>
+                <th>原檔案路徑</th>
+                <th>變更後檔名</th>
+                <th>變更後檔案路徑</th>
+                <th>檔案類型</th>
+                <th>檔案大小 (bytes)</th>
+                <th>最後修改時間</th>
+            </tr>
+            <tr>
+                <td>document.pdf</td>
+                <td>測試資料夾/document.pdf</td>
+                <td class="changed">IMG_document.pdf</td>
+                <td>測試資料夾/IMG_document.pdf</td>
+                <td>application/pdf</td>
+                <td>1024</td>
+                <td>2024/03/15 10:30:00</td>
+            </tr>
+            <tr>
+                <td>image.jpg</td>
+                <td>測試資料夾/image.jpg</td>
+                <td class="changed">IMG_image.jpg</td>
+                <td>測試資料夾/IMG_image.jpg</td>
+                <td>image/jpeg</td>
+                <td>2048</td>
+                <td>2024/03/16 14:20:00</td>
+            </tr>
+            <tr>
+                <td>report.xlsx</td>
+                <td>測試資料夾/report.xlsx</td>
+                <td class="changed">IMG_report.xlsx</td>
+                <td>測試資料夾/IMG_report.xlsx</td>
+                <td>application/vnd.openxml...</td>
+                <td>4096</td>
+                <td>2024/03/17 09:15:00</td>
+            </tr>
+        </table>
+        
+        <div class="note">
+            <strong>📌 重要說明：</strong><br>
+            • <strong>藍色底色</strong>：表示檔名有變更<br>
+            • <strong>原檔名和原檔案路徑</strong>：由系統自動填入，請勿手動修改<br>
+            • <strong>變更後檔名</strong>：可手動編輯或由批次功能自動產生<br>
+            • <strong>變更後檔案路徑</strong>：會根據操作類型自動更新<br>
+            • 請避免在檔名中使用這些字元：/ \ : * ? " < > |
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>🚀 快速設定步驟</h3>
+        <ol>
+            <li><strong>複製表格到 Google Sheets</strong>：選取上方表格內容，複製貼上到 Google Sheets</li>
+            <li><strong>設定工作表名稱</strong>：將工作表分別重新命名為「指令區」和「檔名變更區」</li>
+            <li><strong>調整格式</strong>：
+                <ul>
+                    <li>指令區：將標題列設為粗體，標籤欄設為灰色背景</li>
+                    <li>檔名變更區：將標題列設為深藍背景白字，凍結第一列</li>
+                </ul>
+            </li>
+            <li><strong>設定資料驗證</strong>：
+                <ul>
+                    <li>重新命名模式：新增下拉選單（新增文字,取代文字,大小寫轉換,新增序號,格式化日期）</li>
+                    <li>操作類型：新增下拉選單（原位置更名,複製後更名）</li>
+                </ul>
+            </li>
+            <li><strong>連結 Apps Script</strong>：在 Google Sheets 中前往「擴充功能」→「Apps Script」並貼上程式碼</li>
+        </ol>
+    </div>
+</body>
+</html>
