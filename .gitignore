@@ -1,0 +1,56 @@
+# Google Apps Script
+*.gs.backup
+*.gs~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Environment variables (if any)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Test output
+test-results/
+coverage/
+
+# Documentation build output
+docs/_build/
+site/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Google Sheets backup files (if any)
+*.xlsx.backup
+*.gsheet.backup
