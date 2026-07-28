@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Renamer — 檔名變更區 工作表（線框稿）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --paper:#FBFAF7; --ink:#181B20; --muted:#6B7178;
+  --line:#E7E3DA; --accent:#2E4B8F; --accent-soft:#EAEEF7;
+  --ok:#1F7A54; --err:#B03A2E; --warn:#B8860B;
+  --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); padding:40px 24px 80px;}
+.wrap{max-width:1160px; margin:0 auto;}
+.wordmark{font-family:var(--serif); font-size:28px; margin:0;}
+.wordmark .dot{color:var(--accent);}
+.subtitle{font-family:var(--mono); font-size:12px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-top:6px;}
+header{border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;}
+a.back{font-family:var(--mono); font-size:12px; color:var(--accent); text-decoration:none;}
+
+.browser{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--paper);}
+.browser-bar{background:#F1EFE9; padding:10px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center;}
+.browser-bar .dots span{display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--line); margin-right:5px;}
+.tabbar{display:flex; gap:6px; padding:8px 14px 0; background:var(--paper); border-bottom:1px solid var(--line);}
+.tab{padding:8px 14px; font-size:12.5px; border:1px solid var(--line); border-bottom:none; border-radius:6px 6px 0 0; color:var(--muted); background:#F1EFE9;}
+.tab.active{background:var(--paper); color:var(--ink); font-weight:600; border-color:var(--line);}
+
+.sheet-area{padding:18px; overflow-x:auto;}
+table.grid{border-collapse:collapse; font-size:12.5px; min-width:1080px; width:100%;}
+table.grid th, table.grid td{border:1px solid var(--line); padding:0;}
+table.grid th.colhead{background:#F1EFE9; color:var(--muted); font-family:var(--mono); font-weight:500; width:32px; height:26px; text-align:center; font-size:11px;}
+table.grid td.rowhead{background:#F1EFE9; color:var(--muted); font-family:var(--mono); font-size:11px; text-align:center; width:28px;}
+table.grid th.head{background:var(--accent); color:#fff; font-weight:700; text-align:center; padding:9px 8px; font-size:12px;}
+table.grid td.cell{padding:8px 10px; height:32px; vertical-align:middle; white-space:nowrap;}
+tr.alt td.cell{background:#F8F9FA;}
+td.changed{background:var(--accent-soft); color:var(--accent); font-weight:600;}
+td.dup{background:#FDECEA; color:var(--err); font-weight:600;}
+td.invalid{background:#FFF3E0; color:#B8500A; font-weight:600;}
+.badge{font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:999px; margin-left:6px; vertical-align:1px;}
+.badge.dup{background:var(--err); color:#fff;}
+.badge.invalid{background:var(--warn); color:#fff;}
+
+.legend{display:flex; gap:22px; flex-wrap:wrap; margin:16px 0 0; font-size:12.5px; color:var(--muted);}
+.legend .box{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px;}
+
+.notes{margin-top:24px;}
+.note-card{border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:14px; font-size:13px; line-height:1.7;}
+.note-card h4{margin:0 0 8px; font-family:var(--mono); font-size:12px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase;}
+code{font-family:var(--mono); background:#F1EFE9; padding:1px 5px; border-radius:4px; font-size:12px;}
+footer{margin-top:36px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="wordmark">Renamer<span class="dot">.</span></p>
+      <p class="subtitle">線框稿 · 檔名變更區 工作表</p>
+    </div>
+    <a class="back" href="index.html">← 回總覽</a>
+  </header>
+
+  <div class="browser">
+    <div class="browser-bar"><span class="dots"><span></span><span></span><span></span></span>Google 試算表 — 檔案重新命名工具（範例活頁簿）</div>
+    <div class="tabbar">
+      <div class="tab">指令區</div>
+      <div class="tab active">檔名變更區</div>
+    </div>
+
+    <div class="sheet-area">
+      <table class="grid">
+        <tr>
+          <th class="colhead"></th>
+          <th class="colhead">A</th>
+          <th class="colhead">B</th>
+          <th class="colhead">C</th>
+          <th class="colhead">D</th>
+          <th class="colhead">E</th>
+          <th class="colhead">F</th>
+          <th class="colhead">G</th>
+        </tr>
+        <tr>
+          <td class="rowhead">1</td>
+          <th class="head">原檔名</th>
+          <th class="head">原檔案路徑</th>
+          <th class="head">變更後檔名</th>
+          <th class="head">變更後檔案路徑</th>
+          <th class="head">檔案類型</th>
+          <th class="head">檔案大小 (bytes)</th>
+          <th class="head">最後修改時間</th>
+        </tr>
+        <tr>
+          <td class="rowhead">2</td>
+          <td class="cell">document.pdf</td>
+          <td class="cell">測試重新命名/document.pdf</td>
+          <td class="cell changed">IMG_document.pdf</td>
+          <td class="cell">測試重新命名/IMG_document.pdf</td>
+          <td class="cell">application/pdf</td>
+          <td class="cell">245,120</td>
+          <td class="cell">2026/07/20 10:30:00</td>
+        </tr>
+        <tr class="alt">
+          <td class="rowhead">3</td>
+          <td class="cell">image.jpeg</td>
+          <td class="cell">測試重新命名/image.jpeg</td>
+          <td class="cell changed">IMG_image.jpeg</td>
+          <td class="cell">測試重新命名/IMG_image.jpeg</td>
+          <td class="cell">image/jpeg</td>
+          <td class="cell">1,024,003</td>
+          <td class="cell">2026/07/21 09:12:00</td>
+        </tr>
+        <tr>
+          <td class="rowhead">4</td>
+          <td class="cell">report_v1.docx</td>
+          <td class="cell">測試重新命名/report_v1.docx</td>
+          <td class="cell dup">IMG_report_v1.docx<span class="badge dup">重複</span></td>
+          <td class="cell">測試重新命名/IMG_report_v1.docx</td>
+          <td class="cell">application/vnd...document</td>
+          <td class="cell">88,410</td>
+          <td class="cell">2026/07/21 15:44:00</td>
+        </tr>
+        <tr class="alt">
+          <td class="rowhead">5</td>
+          <td class="cell">report_v1_copy.docx</td>
+          <td class="cell">測試重新命名/report_v1_copy.docx</td>
+          <td class="cell dup">IMG_report_v1.docx<span class="badge dup">重複</span></td>
+          <td class="cell">測試重新命名/IMG_report_v1.docx</td>
+          <td class="cell">application/vnd...document</td>
+          <td class="cell">88,410</td>
+          <td class="cell">2026/07/21 15:50:00</td>
+        </tr>
+        <tr>
+          <td class="rowhead">6</td>
+          <td class="cell">notes*final.txt</td>
+          <td class="cell">測試重新命名/notes*final.txt</td>
+          <td class="cell invalid">IMG_notes*final.txt<span class="badge invalid">不合法字元</span></td>
+          <td class="cell">測試重新命名/IMG_notes*final.txt</td>
+          <td class="cell">text/plain</td>
+          <td class="cell">2,048</td>
+          <td class="cell">2026/07/22 08:05:00</td>
+        </tr>
+        <tr class="alt">
+          <td class="rowhead">7</td>
+          <td class="cell">unchanged.txt</td>
+          <td class="cell">測試重新命名/unchanged.txt</td>
+          <td class="cell">unchanged.txt</td>
+          <td class="cell">測試重新命名/unchanged.txt</td>
+          <td class="cell">text/plain</td>
+          <td class="cell">512</td>
+          <td class="cell">2026/07/22 08:06:00</td>
+        </tr>
+      </table>
+      <div class="legend">
+        <div><span class="box" style="background:#EAEEF7;"></span>C 欄與 A 欄不同（檔名將變更）</div>
+        <div><span class="box" style="background:#FDECEA;"></span>C 欄重複（COUNTIF 條件格式警告）</div>
+        <div><span class="box" style="background:#FFF3E0;"></span>C 欄含不合法字元 <code>/ \ : * ? " &lt; &gt; |</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note-card">
+      <h4>欄位依據</h4>
+      對應 <code>templates/filelist-sheet-template.md</code> 與 <code>src/FileOperations.js</code> 的
+      <code>populateFileList()</code>：A～G 欄由「讀取資料夾檔案」自動填入，C 欄套用批次規則後可再由使用者手動修改，
+      D 欄依 C 欄與操作類型自動重算。
+    </div>
+    <div class="note-card">
+      <h4>▸ 這裡就是人工預覽關卡</h4>
+      C 欄是唯一開放手動編輯的欄位；使用者確認整份清單無誤（含重複／不合法字元警示已排除）後，
+      才回到選單執行「開始重新命名」，此時才會真正呼叫 Drive 進行改名或複製。
+    </div>
+  </div>
+
+  <footer>Renamer · mockup/sheet-filelist.html · 線框稿，資料為示意範例，非真實檔案。</footer>
+</div>
+</body>
+</html>

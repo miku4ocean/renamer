@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Renamer — 指令區 工作表（線框稿）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --paper:#FBFAF7; --ink:#181B20; --muted:#6B7178;
+  --line:#E7E3DA; --accent:#2E4B8F; --accent-soft:#EAEEF7;
+  --ok:#1F7A54; --err:#B03A2E; --warn:#B8860B;
+  --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); padding:40px 24px 80px;}
+.wrap{max-width:980px; margin:0 auto;}
+.wordmark{font-family:var(--serif); font-size:28px; margin:0;}
+.wordmark .dot{color:var(--accent);}
+.subtitle{font-family:var(--mono); font-size:12px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-top:6px;}
+header{border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;}
+a.back{font-family:var(--mono); font-size:12px; color:var(--accent); text-decoration:none;}
+
+.browser{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--paper);}
+.browser-bar{background:#F1EFE9; padding:10px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center;}
+.browser-bar .dots span{display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--line); margin-right:5px;}
+
+.menubar{padding:10px 16px; border-bottom:1px solid var(--line); font-size:13px; background:var(--paper); position:relative;}
+.menubar .menu-trigger{
+  display:inline-block; padding:6px 12px; border-radius:6px; background:var(--accent-soft); color:var(--accent);
+  font-weight:600; cursor:default;
+}
+.menu-dropdown{
+  position:absolute; top:44px; left:16px; background:var(--paper); border:1px solid var(--line);
+  border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,.08); min-width:220px; z-index:5;
+}
+.menu-dropdown .mi{padding:10px 14px; font-size:13px; border-bottom:1px solid var(--line);}
+.menu-dropdown .mi:last-child{border-bottom:none;}
+.menu-dropdown .mi.sep{border-bottom:1px solid var(--line); padding:0; height:1px;}
+
+.sheet-area{padding:18px; overflow-x:auto;}
+table.grid{border-collapse:collapse; font-size:13px; min-width:640px;}
+table.grid th, table.grid td{border:1px solid var(--line); padding:0;}
+table.grid th.colhead{background:#F1EFE9; color:var(--muted); font-family:var(--mono); font-weight:500; width:36px; height:26px; text-align:center; font-size:11px;}
+table.grid td.rowhead{background:#F1EFE9; color:var(--muted); font-family:var(--mono); font-size:11px; text-align:center; width:32px;}
+table.grid td.cell{padding:9px 12px; min-width:230px; height:36px; vertical-align:middle;}
+table.grid td.cell.label{background:#F5F5F5; font-weight:600; text-align:right; color:var(--ink);}
+table.grid td.cell.input{background:var(--paper); color:var(--ink);}
+table.grid td.cell.title{background:var(--accent-soft); color:var(--accent); font-weight:700; text-align:center;}
+.dropdown-hint{float:right; color:var(--muted); font-family:var(--mono); font-size:11px;}
+
+.notes{margin-top:24px;}
+.note-card{border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:14px; font-size:13px; line-height:1.7;}
+.note-card h4{margin:0 0 8px; font-family:var(--mono); font-size:12px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase;}
+code{font-family:var(--mono); background:#F1EFE9; padding:1px 5px; border-radius:4px; font-size:12px;}
+footer{margin-top:36px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="wordmark">Renamer<span class="dot">.</span></p>
+      <p class="subtitle">線框稿 · 指令區 工作表</p>
+    </div>
+    <a class="back" href="index.html">← 回總覽</a>
+  </header>
+
+  <div class="browser">
+    <div class="browser-bar"><span class="dots"><span></span><span></span><span></span></span>Google 試算表 — 檔案重新命名工具（範例活頁簿）</div>
+    <div class="menubar">
+      檔案　編輯　查看　插入　格式　資料　工具　擴充功能　說明
+      <span class="menu-trigger">檔案重新命名工具 ▾</span>
+      <div class="menu-dropdown">
+        <div class="mi">讀取資料夾檔案</div>
+        <div class="mi">套用批次規則</div>
+        <div class="mi">開始重新命名</div>
+        <div class="mi sep"></div>
+        <div class="mi">清除所有資料</div>
+      </div>
+    </div>
+
+    <div class="sheet-area">
+      <table class="grid">
+        <tr>
+          <th class="colhead"></th>
+          <th class="colhead">A</th>
+          <th class="colhead">B</th>
+        </tr>
+        <tr>
+          <td class="rowhead">1</td>
+          <td class="cell title" colspan="2">檔案重新命名指令區</td>
+        </tr>
+        <tr>
+          <td class="rowhead">2</td>
+          <td class="cell label">來源資料夾：</td>
+          <td class="cell input">1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms</td>
+        </tr>
+        <tr>
+          <td class="rowhead">3</td>
+          <td class="cell label">目標資料夾（複製模式）：</td>
+          <td class="cell input">（原位置更名時可留空）</td>
+        </tr>
+        <tr>
+          <td class="rowhead">4</td>
+          <td class="cell label">重新命名模式：</td>
+          <td class="cell input">新增文字<span class="dropdown-hint">清單 ▾</span></td>
+        </tr>
+        <tr>
+          <td class="rowhead">5</td>
+          <td class="cell label">參數設定：</td>
+          <td class="cell input">前綴：IMG_</td>
+        </tr>
+        <tr>
+          <td class="rowhead">6</td>
+          <td class="cell label">操作類型：</td>
+          <td class="cell input">原位置更名<span class="dropdown-hint">清單 ▾</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note-card">
+      <h4>欄位依據</h4>
+      對應 <code>templates/command-sheet-template.md</code> 與 <code>src/FileOperations.js</code> 的
+      <code>getFolderIdFromSheet()</code>／<code>getRenameConfigFromSheet()</code>：B2 來源資料夾、B3 目標資料夾、
+      B4 命名模式、B5 模式參數、B6 操作類型。B4／B6 為下拉清單資料驗證。
+    </div>
+    <div class="note-card">
+      <h4>五種命名模式（B4 清單選項）</h4>
+      新增文字・取代文字・大小寫轉換・新增序號・格式化日期 — 對應 <code>src/BatchRename.js</code> 的
+      <code>generateBatchRenameOptions()</code>。
+    </div>
+  </div>
+
+  <footer>Renamer · mockup/sheet-command.html · 線框稿，僅示意版面與欄位，非真實可互動頁面。</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1140" font-family="ui-sans-serif,system-ui,'Segoe UI',Roboto,'Noto Sans TC',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B7178"/>
+    </marker>
+    <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2E4B8F"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1120" height="1140" fill="#FBFAF7"/>
+
+  <!-- 標題 -->
+  <text x="20" y="34" font-family="'Iowan Old Style',Georgia,'Times New Roman',serif" font-size="28" fill="#181B20">Renamer<tspan fill="#2E4B8F">.</tspan></text>
+  <text x="20" y="56" font-family="ui-monospace,'SF Mono','Cascadia Code',Menlo,monospace" font-size="12" letter-spacing="2" fill="#6B7178">架構圖 · GOOGLE APPS SCRIPT 批次改名工具</text>
+  <line x1="20" y1="70" x2="1100" y2="70" stroke="#E7E3DA" stroke-width="1"/>
+
+  <!-- ===== L1 使用者介面層 ===== -->
+  <text x="40" y="122" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">① 使用者介面層 — GOOGLE SHEETS 活頁簿</text>
+  <rect x="20" y="130" width="1080" height="120" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
+
+  <g>
+    <rect x="40" y="145" width="330" height="90" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="55" y="168" font-size="14" font-weight="600" fill="#181B20">指令區 工作表</text>
+    <text x="55" y="188" font-size="12" fill="#6B7178">B2 來源／B3 目標資料夾</text>
+    <text x="55" y="205" font-size="12" fill="#6B7178">B4 命名模式・B5 參數</text>
+    <text x="55" y="222" font-size="12" fill="#6B7178">B6 操作類型</text>
+  </g>
+
+  <g>
+    <rect x="395" y="145" width="330" height="90" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="410" y="168" font-size="14" font-weight="600" fill="#181B20">自訂選單</text>
+    <text x="410" y="185" font-size="12" fill="#6B7178">《檔案重新命名工具》</text>
+    <text x="410" y="205" font-size="12" fill="#6B7178">讀取資料夾檔案／套用批次規則</text>
+    <text x="410" y="222" font-size="12" fill="#6B7178">開始重新命名／清除所有資料</text>
+  </g>
+
+  <g>
+    <rect x="750" y="145" width="330" height="90" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="765" y="168" font-size="14" font-weight="600" fill="#181B20">檔名變更區 工作表</text>
+    <text x="765" y="188" font-size="12" fill="#6B7178">A原檔名 B原路徑</text>
+    <text x="765" y="205" font-size="12" fill="#2E4B8F">C變更後檔名（可手動編輯）</text>
+    <text x="765" y="222" font-size="12" fill="#6B7178">D路徑 E類型 F大小 G時間</text>
+  </g>
+
+  <line x1="560" y1="250" x2="560" y2="286" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L2 選單事件層 ===== -->
+  <text x="40" y="312" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">② 選單事件層 — SRC/CODE.JS</text>
+  <rect x="20" y="320" width="1080" height="110" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
+  <g font-size="12.5" fill="#181B20">
+    <rect x="40" y="335" width="195" height="80" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="137" y="365" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12">onOpen()</text>
+    <text x="137" y="385" text-anchor="middle" font-size="11" fill="#6B7178">建立自訂選單</text>
+
+    <rect x="255" y="335" width="195" height="80" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="352" y="365" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12">loadFolderFiles()</text>
+    <text x="352" y="385" text-anchor="middle" font-size="11" fill="#6B7178">讀取資料夾檔案</text>
+
+    <rect x="470" y="335" width="195" height="80" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="567" y="365" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12">applyBatchRules()</text>
+    <text x="567" y="385" text-anchor="middle" font-size="11" fill="#6B7178">套用批次規則</text>
+
+    <rect x="685" y="335" width="195" height="80" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="782" y="365" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12">startRenaming()</text>
+    <text x="782" y="385" text-anchor="middle" font-size="11" fill="#6B7178">含 YES/NO 確認框</text>
+
+    <rect x="900" y="335" width="195" height="80" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="997" y="365" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12">clearAllData()</text>
+    <text x="997" y="385" text-anchor="middle" font-size="11" fill="#6B7178">含確認框</text>
+  </g>
+
+  <line x1="560" y1="430" x2="560" y2="466" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L3 命名規則運算層 ===== -->
+  <text x="40" y="492" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">③ 命名規則運算層 — SRC/BATCHRENAME.JS（純函數，TESTS/ 可單元測試）</text>
+  <rect x="20" y="500" width="1080" height="120" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
+  <rect x="40" y="515" width="1040" height="46" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+  <text x="560" y="543" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="#181B20">applyBatchRename() / applyRenameRule() — 規則分派器</text>
+
+  <g font-size="11.5" fill="#181B20">
+    <rect x="40" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
+    <text x="137" y="592" text-anchor="middle">新增文字</text>
+    <rect x="255" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
+    <text x="352" y="592" text-anchor="middle">取代文字</text>
+    <rect x="470" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
+    <text x="567" y="592" text-anchor="middle">大小寫轉換</text>
+    <rect x="685" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
+    <text x="782" y="592" text-anchor="middle">新增序號</text>
+    <rect x="900" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
+    <text x="997" y="592" text-anchor="middle">格式化日期</text>
+  </g>
+
+  <line x1="560" y1="620" x2="560" y2="656" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L4 資料存取層（含 KEYSTONE） ===== -->
+  <text x="40" y="682" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">④ 資料存取層 — SRC/FILEOPERATIONS.JS</text>
+  <rect x="20" y="660" width="1080" height="280" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
+
+  <g font-size="12" fill="#181B20">
+    <rect x="40" y="700" width="510" height="70" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="55" y="725" font-family="ui-monospace,monospace" font-size="12">getFolderIdFromSheet() / getFilesFromFolder()</text>
+    <text x="55" y="745" font-size="11" fill="#6B7178">掃描 Drive 資料夾，排除 Google 試算表本身</text>
+
+    <rect x="590" y="700" width="510" height="70" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+    <text x="605" y="725" font-family="ui-monospace,monospace" font-size="12">populateFileList() / applyRulesToExistingFiles()</text>
+    <text x="605" y="745" font-size="11" fill="#6B7178">把規則套用結果寫回「檔名變更區」C／D欄</text>
+  </g>
+
+  <line x1="560" y1="770" x2="560" y2="782" stroke="#2E4B8F" stroke-width="2"/>
+
+  <!-- KEYSTONE：人工預覽關卡 -->
+  <rect x="210" y="785" width="700" height="80" rx="10" fill="#EAEEF7" stroke="#2E4B8F" stroke-width="2.5"/>
+  <text x="560" y="812" text-anchor="middle" font-size="15" font-weight="700" fill="#2E4B8F">▸ 人工預覽關卡（KEYSTONE）</text>
+  <text x="560" y="833" text-anchor="middle" font-size="12" fill="#181B20">「檔名變更區」C欄變更後檔名可手動編輯／檢視衝突與不合法字元提示</text>
+  <text x="560" y="850" text-anchor="middle" font-size="12" fill="#181B20">使用者確認無誤，才手動點選「開始重新命名」——沒有自動連動直接寫檔</text>
+
+  <line x1="560" y1="865" x2="560" y2="877" stroke="#2E4B8F" stroke-width="2" marker-end="url(#arrowAccent)"/>
+
+  <rect x="210" y="880" width="700" height="45" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
+  <text x="560" y="907" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#181B20">renameFile() / copyAndRenameFile() / getFileIdByNameAndPath()</text>
+
+  <line x1="560" y1="940" x2="560" y2="976" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L5 外部服務層 ===== -->
+  <text x="40" y="1002" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">⑤ 外部服務層</text>
+  <rect x="20" y="980" width="1080" height="130" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
+
+  <g>
+    <rect x="40" y="1020" width="510" height="70" rx="8" fill="#FBFAF7" stroke="#6B7178"/>
+    <text x="295" y="1050" text-anchor="middle" font-size="14" font-weight="600" fill="#181B20">Google Drive</text>
+    <text x="295" y="1070" text-anchor="middle" font-size="11" fill="#6B7178">實際檔案儲存與重新命名的最終落點</text>
+
+    <rect x="590" y="1020" width="510" height="70" rx="8" fill="#FBFAF7" stroke="#6B7178" stroke-dasharray="4 3"/>
+    <text x="845" y="1043" text-anchor="middle" font-size="13" font-weight="600" fill="#181B20">Apps Script V8 執行環境</text>
+    <text x="845" y="1061" text-anchor="middle" font-size="11" fill="#6B7178">timeZone: Asia/Taipei</text>
+    <text x="845" y="1078" text-anchor="middle" font-size="11" fill="#6B7178">單次執行時間上限 6 分鐘（HANDOFF 地雷）</text>
+  </g>
+
+  <text x="20" y="1128" font-size="11" fill="#6B7178">無資料庫・無伺服器・無第三方 API — 全部運行在使用者自己的 Google 帳號內</text>
+</svg>
