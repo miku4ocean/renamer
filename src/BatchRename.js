@@ -83,7 +83,8 @@ function applyReplaceText(baseName, config, extension) {
   if (config.option === '完全取代') {
     return replaceText + extension;
   } else {
-    return baseName.replace(new RegExp(findText, 'g'), replaceText) + extension;
+    // escapeRegExp 定義於 FileOperations.js；GAS 專案內所有檔案共用同一個全域作用域
+    return baseName.replace(new RegExp(escapeRegExp(findText), 'g'), replaceText) + extension;
   }
 }
 

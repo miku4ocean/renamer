@@ -79,12 +79,13 @@ function populateFileList(sheet, files) {
     
     return [
       file.name,
-      file.path, 
+      file.path,
       newName,
       newPath,
       file.mimeType,
       file.size,
-      file.lastModified
+      file.lastModified,
+      file.id
     ];
   });
   
@@ -138,9 +139,16 @@ function applyReplaceTextRule(baseName, parameter, extension) {
     return newName + extension;
   } else if (parameter.includes('→')) {
     const [findText, replaceText] = parameter.split('→');
-    return baseName.replace(new RegExp(findText.replace('部分取代：', ''), 'g'), replaceText) + extension;
+    const literalFindText = findText.replace('部分取代：', '');
+    return baseName.replace(new RegExp(escapeRegExp(literalFindText), 'g'), replaceText) + extension;
   }
   return baseName + extension;
+}
+
+// 將使用者輸入的字面字串跳脫成安全的正則表達式片段，避免 ReDoS 與正則注入
+// （例如使用者只是想字面取代「.」，不應被當成萬用字元）
+function escapeRegExp(string) {
+  return String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function applyCaseChangeRule(baseName, parameter, extension) {
@@ -247,22 +255,24 @@ function executeRenaming(fileListSheet, renameConfig) {
     throw new Error('沒有檔案可以處理');
   }
   
-  const data = fileListSheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  const data = fileListSheet.getRange(2, 1, lastRow - 1, 8).getValues();
   let successCount = 0;
   let errorCount = 0;
   const errors = [];
-  
+
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
-    const [originalName, originalPath, newName] = row;
-    
+    const [originalName, , newName, , , , , fileId] = row;
+
     if (!originalName || !newName || originalName === newName) {
       continue;
     }
-    
+
     try {
-      const fileId = getFileIdByNameAndPath(originalName, originalPath);
-      
+      if (!fileId) {
+        throw new Error('缺少檔案 ID，請重新執行「讀取資料夾檔案」');
+      }
+
       if (renameConfig.operationType === '原位置更名') {
         renameFile(fileId, newName);
       } else if (renameConfig.operationType === '複製後更名') {
@@ -296,19 +306,19 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
   const lastRow = fileListSheet.getLastRow();
   if (lastRow < 2) return;
   
-  const data = fileListSheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  const data = fileListSheet.getRange(2, 1, lastRow - 1, 8).getValues();
   const newData = [];
-  
+
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
-    const [originalName, originalPath, , , mimeType, size, lastModified] = row;
-    
+    const [originalName, originalPath, , , mimeType, size, lastModified, fileId] = row;
+
     if (!originalName) continue;
-    
+
     try {
       let newName = applyRenameRule(originalName, renameConfig.mode, renameConfig.parameter, lastModified, i);
       let newPath = originalPath;
-      
+
       if (renameConfig.operationType === '複製後更名' && renameConfig.targetFolderId) {
         try {
           const targetFolder = DriveApp.getFolderById(renameConfig.targetFolderId);
@@ -321,55 +331,15 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
         pathParts[pathParts.length - 1] = newName;
         newPath = pathParts.join('/');
       }
-      
-      newData.push([originalName, originalPath, newName, newPath, mimeType, size, lastModified]);
+
+      newData.push([originalName, originalPath, newName, newPath, mimeType, size, lastModified, fileId]);
     } catch (error) {
       newData.push(row);
       console.log(`處理檔案 ${originalName} 時發生錯誤: ${error.message}`);
     }
   }
-  
-  if (newData.length > 0) {
-    fileListSheet.getRange(2, 1, newData.length, 7).setValues(newData);
-  }
-}
 
-function getFileIdByNameAndPath(fileName, filePath) {
-  try {
-    const commandSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('指令區');
-    const sourceFolderId = getFolderIdFromSheet(commandSheet);
-    
-    if (sourceFolderId) {
-      const sourceFolder = DriveApp.getFolderById(sourceFolderId);
-      const files = sourceFolder.getFilesByName(fileName);
-      
-      while (files.hasNext()) {
-        const file = files.next();
-        if (file.getName() === fileName) {
-          return file.getId();
-        }
-      }
-    }
-    
-    const pathParts = filePath.split('/');
-    const folderName = pathParts[0];
-    const folders = DriveApp.getFoldersByName(folderName);
-    
-    while (folders.hasNext()) {
-      const folder = folders.next();
-      const files = folder.getFilesByName(fileName);
-      
-      while (files.hasNext()) {
-        const file = files.next();
-        if (file.getName() === fileName) {
-          return file.getId();
-        }
-      }
-    }
-    
-    throw new Error(`找不到檔案: ${fileName}`);
-    
-  } catch (error) {
-    throw new Error(`無法找到檔案 ${fileName}: ${error.message}`);
+  if (newData.length > 0) {
+    fileListSheet.getRange(2, 1, newData.length, 8).setValues(newData);
   }
 }

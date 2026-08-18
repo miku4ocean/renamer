@@ -171,6 +171,7 @@ function populateFileList(sheet, files)
 | E | file.mimeType |
 | F | file.size |
 | G | file.lastModified |
+| H | file.id（重新命名時直接用此 ID 呼叫 DriveApp，不再靠檔名重查） |
 
 ### renameFile(fileId, newName)
 

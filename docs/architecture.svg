@@ -118,7 +118,7 @@
   <line x1="560" y1="865" x2="560" y2="877" stroke="#2E4B8F" stroke-width="2" marker-end="url(#arrowAccent)"/>
 
   <rect x="210" y="880" width="700" height="45" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
-  <text x="560" y="907" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#181B20">renameFile() / copyAndRenameFile() / getFileIdByNameAndPath()</text>
+  <text x="560" y="907" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#181B20">renameFile() / copyAndRenameFile()（用掃描時存的檔案ID，不再靠檔名重查）</text>
 
   <line x1="560" y1="940" x2="560" y2="976" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
 

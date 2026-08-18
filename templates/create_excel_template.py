@@ -157,29 +157,30 @@ def setup_filelist_sheet(ws):
     
     # 設定標題列
     headers = [
-        "原檔名", "原檔案路徑", "變更後檔名", "變更後檔案路徑", 
-        "檔案類型", "檔案大小 (bytes)", "最後修改時間"
+        "原檔名", "原檔案路徑", "變更後檔名", "變更後檔案路徑",
+        "檔案類型", "檔案大小 (bytes)", "最後修改時間", "檔案ID"
     ]
-    
+
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = center_align
         cell.border = white_border
-    
-    # 設定欄寬
-    column_widths = [20, 25, 20, 25, 15, 12, 20]
+
+    # 設定欄寬（H 欄為系統用的 Drive 檔案ID，隱藏起來即可，勿刪除）
+    column_widths = [20, 25, 20, 25, 15, 12, 20, 30]
     for col, width in enumerate(column_widths, start=1):
         ws.column_dimensions[chr(64 + col)].width = width
-    
+    ws.column_dimensions['H'].hidden = True
+
     # 凍結第一列
     ws.freeze_panes = 'A2'
-    
+
     # 新增一些範例資料
     sample_data = [
-        ["document.pdf", "測試資料夾/document.pdf", "IMG_document.pdf", "測試資料夾/IMG_document.pdf", "application/pdf", "1024", "2024/03/15 10:30:00"],
-        ["image.jpg", "測試資料夾/image.jpg", "IMG_image.jpg", "測試資料夾/IMG_image.jpg", "image/jpeg", "2048", "2024/03/16 14:20:00"],
+        ["document.pdf", "測試資料夾/document.pdf", "IMG_document.pdf", "測試資料夾/IMG_document.pdf", "application/pdf", "1024", "2024/03/15 10:30:00", "1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"],
+        ["image.jpg", "測試資料夾/image.jpg", "IMG_image.jpg", "測試資料夾/IMG_image.jpg", "image/jpeg", "2048", "2024/03/16 14:20:00", "1BcDeFgHiJkLmNoPqRsTuVwXyZ1234567890"],
     ]
     
     for row, data in enumerate(sample_data, start=2):
@@ -211,7 +212,8 @@ def create_with_pandas():
         '變更後檔案路徑': ['測試資料夾/IMG_document.pdf', '測試資料夾/IMG_image.jpg'],
         '檔案類型': ['application/pdf', 'image/jpeg'],
         '檔案大小 (bytes)': [1024, 2048],
-        '最後修改時間': ['2024/03/15 10:30:00', '2024/03/16 14:20:00']
+        '最後修改時間': ['2024/03/15 10:30:00', '2024/03/16 14:20:00'],
+        '檔案ID': ['1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789', '1BcDeFgHiJkLmNoPqRsTuVwXyZ1234567890']
     }
     
     # 建立 DataFrame

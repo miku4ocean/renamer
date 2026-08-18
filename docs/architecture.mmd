@@ -27,7 +27,7 @@ flowchart TB
         F1["getFolderIdFromSheet()\ngetFilesFromFolder()"]
         F2["populateFileList()\napplyRulesToExistingFiles()"]
         GATE{{"人工預覽關卡\n『檔名變更區』C欄可手動修改\n使用者確認無誤才點『開始重新命名』"}}
-        F3["renameFile()\ncopyAndRenameFile()\ngetFileIdByNameAndPath()"]
+        F3["renameFile()\ncopyAndRenameFile()\n（改名直接用掃描時存好的檔案ID，不再用檔名重查）"]
     end
 
     subgraph L5["⑤ 外部服務層"]
