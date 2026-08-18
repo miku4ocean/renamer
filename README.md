@@ -81,8 +81,7 @@
 renamer/
 ├── src/                          # 核心程式碼
 │   ├── Code.js                   # 主要入口點與選單功能
-│   ├── FileOperations.js         # 檔案操作核心功能
-│   └── BatchRename.js           # 批次重新命名邏輯
+│   └── FileOperations.js         # 檔案操作核心功能
 ├── templates/                    # Google Sheets 模板
 │   ├── command-sheet-template.md      # 指令區工作表模板
 │   └── filelist-sheet-template.md    # 檔名變更區工作表模板

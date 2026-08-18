@@ -94,6 +94,16 @@ function populateFileList(sheet, files) {
   }
 }
 
+function getNameWithoutExtension(filename) {
+  const lastDotIndex = filename.lastIndexOf('.');
+  return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+}
+
+function getFileExtension(filename) {
+  const lastDotIndex = filename.lastIndexOf('.');
+  return lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+}
+
 function applyRenameRule(fileName, mode, parameter, lastModified, index = 0) {
   const nameWithoutExt = getNameWithoutExtension(fileName);
   const extension = getFileExtension(fileName);

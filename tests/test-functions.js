@@ -3,7 +3,6 @@ function runTests() {
   
   try {
     testFileNameUtilities();
-    testBatchRenameLogic();
     testFolderIdExtraction();
     testProductionApplyRenameRule();
     console.log('✅ 所有測試通過！');
@@ -41,105 +40,8 @@ function testFileNameUtilities() {
   console.log('✅ 檔名處理函數測試通過');
 }
 
-function testBatchRenameLogic() {
-  console.log('🧪 測試批次重新命名邏輯...');
-  
-  const testFiles = [
-    {
-      name: 'document.pdf',
-      lastModified: new Date('2024-03-15T10:30:00')
-    },
-    {
-      name: 'image.jpg',
-      lastModified: new Date('2024-03-16T14:20:00')
-    }
-  ];
-  
-  testAddTextRename(testFiles);
-  testReplaceTextRename(testFiles);
-  testChangeCaseRename(testFiles);
-  testAddNumbersRename(testFiles);
-  testFormatDateRename(testFiles);
-  
-  console.log('✅ 批次重新命名邏輯測試通過');
-}
-
-function testAddTextRename(testFiles) {
-  const config = {
-    type: 'addText',
-    text: 'IMG_',
-    position: '前綴'
-  };
-  
-  const result = applyBatchRename(testFiles, config);
-  
-  if (result[0].newName !== 'IMG_document.pdf') {
-    throw new Error(`新增文字測試失敗: 期望 "IMG_document.pdf", 實際 "${result[0].newName}"`);
-  }
-}
-
-function testReplaceTextRename(testFiles) {
-  const config = {
-    type: 'replaceText',
-    findText: 'document',
-    replaceText: 'report',
-    option: '部分取代'
-  };
-  
-  const result = applyBatchRename(testFiles, config);
-  
-  if (result[0].newName !== 'report.pdf') {
-    throw new Error(`取代文字測試失敗: 期望 "report.pdf", 實際 "${result[0].newName}"`);
-  }
-}
-
-function testChangeCaseRename(testFiles) {
-  const config = {
-    type: 'changeCase',
-    option: '全部大寫'
-  };
-  
-  const result = applyBatchRename(testFiles, config);
-  
-  if (result[0].newName !== 'DOCUMENT.pdf') {
-    throw new Error(`大小寫轉換測試失敗: 期望 "DOCUMENT.pdf", 實際 "${result[0].newName}"`);
-  }
-}
-
-function testAddNumbersRename(testFiles) {
-  const config = {
-    type: 'addNumbers',
-    startNumber: 1,
-    digits: 3,
-    position: '前綴序號'
-  };
-  
-  const result = applyBatchRename(testFiles, config);
-  
-  if (result[0].newName !== '001_document.pdf') {
-    throw new Error(`新增序號測試失敗: 期望 "001_document.pdf", 實際 "${result[0].newName}"`);
-  }
-  
-  if (result[1].newName !== '002_image.jpg') {
-    throw new Error(`新增序號測試失敗: 期望 "002_image.jpg", 實際 "${result[1].newName}"`);
-  }
-}
-
-function testFormatDateRename(testFiles) {
-  const config = {
-    type: 'formatDate',
-    format: 'YYYY-MM-DD'
-  };
-  
-  const result = applyBatchRename(testFiles, config);
-  
-  if (result[0].newName !== '2024-03-15_document.pdf') {
-    throw new Error(`格式化日期測試失敗: 期望 "2024-03-15_document.pdf", 實際 "${result[0].newName}"`);
-  }
-}
-
 // 生產路徑測試：applyRenameRule 是 FileOperations.js 真正被 Code.js 呼叫的核心邏輯
-// （applyBatchRename／BatchRename.js 是沒人呼叫的死碼，上面的 testBatchRenameLogic 測不到這條路徑）
+// （原本的 applyBatchRename／BatchRename.js 是沒人呼叫的死碼，連同其專屬測試已一併移除）
 function testProductionApplyRenameRule() {
   console.log('🧪 測試生產路徑 applyRenameRule（FileOperations.js）...');
 
@@ -275,63 +177,9 @@ function testFolderIdExtraction() {
   console.log('✅ 資料夾 ID 提取測試通過');
 }
 
-function createMockFile(name, mimeType = 'text/plain', size = 1024) {
-  return {
-    name: name,
-    mimeType: mimeType,
-    size: size,
-    lastModified: new Date('2024-03-15T10:30:00')
-  };
-}
-
-function runPerformanceTest() {
-  console.log('⚡ 執行效能測試...');
-  
-  const largeFileList = [];
-  for (let i = 0; i < 1000; i++) {
-    largeFileList.push(createMockFile(`file_${i}.txt`));
-  }
-  
-  const startTime = Date.now();
-  
-  const config = {
-    type: 'addNumbers',
-    startNumber: 1,
-    digits: 4,
-    position: '前綴序號'
-  };
-  
-  const result = applyBatchRename(largeFileList, config);
-  
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-  
-  console.log(`✅ 處理 ${largeFileList.length} 個檔案耗時: ${duration}ms`);
-  
-  if (result.length !== largeFileList.length) {
-    throw new Error('效能測試失敗: 處理結果數量不正確');
-  }
-  
-  if (result[0].newName !== '0001_file_0.txt') {
-    throw new Error(`效能測試失敗: 第一個檔案名稱錯誤: ${result[0].newName}`);
-  }
-}
-
 function testErrorHandling() {
   console.log('🧪 測試錯誤處理...');
-  
-  try {
-    const invalidConfig = {
-      type: 'invalid_type'
-    };
-    
-    applyBatchRename([createMockFile('test.txt')], invalidConfig);
-    
-    console.log('⚠️  警告: 錯誤處理測試未如預期拋出錯誤');
-  } catch (error) {
-    console.log('✅ 錯誤處理正常工作');
-  }
-  
+
   try {
     getFolderIdFromSheet(null);
     console.log('⚠️  警告: null sheet 測試未如預期拋出錯誤');
