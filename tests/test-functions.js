@@ -1,6 +1,6 @@
 function runTests() {
   console.log('=== Renamer 測試套件開始執行 ===');
-  
+
   try {
     testFileNameUtilities();
     testFolderIdExtraction();
@@ -8,8 +8,11 @@ function runTests() {
     console.log('✅ 所有測試通過！');
   } catch (error) {
     console.error('❌ 測試失敗:', error.message);
+    console.log('=== 測試套件執行完成 ===');
+    // 重新拋出，讓呼叫端（例如 node:vm runner）知道測試套件失敗，不再被這裡的 catch 吞掉
+    throw error;
   }
-  
+
   console.log('=== 測試套件執行完成 ===');
 }
 
