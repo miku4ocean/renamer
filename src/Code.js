@@ -58,10 +58,16 @@ function startRenaming() {
       ui.ButtonSet.YES_NO);
     
     if (result === ui.Button.YES) {
-      const successCount = executeRenaming(fileListSheet, renameConfig);
-      ui.alert('完成', `成功處理 ${successCount} 個檔案！`, ui.ButtonSet.OK);
+      const renameResult = executeRenaming(fileListSheet, renameConfig);
+      if (renameResult.timedOut) {
+        ui.alert('尚未完成', renameResult.message, ui.ButtonSet.OK);
+      } else if (renameResult.errorCount > 0) {
+        ui.alert('完成（含錯誤）', renameResult.message, ui.ButtonSet.OK);
+      } else {
+        ui.alert('完成', renameResult.message, ui.ButtonSet.OK);
+      }
     }
-    
+
   } catch (error) {
     ui.alert('錯誤', `重新命名時發生錯誤：${error.message}`, ui.ButtonSet.OK);
   }

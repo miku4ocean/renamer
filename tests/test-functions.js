@@ -7,6 +7,7 @@ function runTests() {
     testProductionApplyRenameRule();
     testPopulateFileListSerialNumbering();
     testApplyRulesToExistingFilesSequentialNumbering();
+    testExecuteRenamingIdempotency();
     console.log('✅ 所有測試通過！');
   } catch (error) {
     console.error('❌ 測試失敗:', error.message);
@@ -287,6 +288,116 @@ function testApplyRulesToExistingFilesSequentialNumbering() {
   });
 
   console.log('✅ applyRulesToExistingFiles 空列不佔用序號測試通過');
+}
+
+function testExecuteRenamingIdempotency() {
+  console.log('🧪 測試 executeRenaming 超時續跑與冪等性（bug: 沒有逐列記錄結果，重跑會重複複製）...');
+
+  if (typeof makeSheet !== 'function' || typeof DriveApp === 'undefined' || typeof DriveApp._reset !== 'function') {
+    console.log('⏭️  跳過（僅限 node tests/run-node.mjs 跑者，GAS 編輯器內沒有假 DriveApp／makeSheet）');
+    return;
+  }
+
+  testExecuteRenamingTimeoutThenResume();
+  testExecuteRenamingFailureIsolated();
+
+  console.log('✅ executeRenaming 超時續跑與冪等性測試通過');
+}
+
+function testExecuteRenamingTimeoutThenResume() {
+  DriveApp._reset();
+  DriveApp._registerFolder('target-folder', '目標資料夾', []);
+  DriveApp._registerFile('id-a', { name: 'a.txt' });
+  DriveApp._registerFile('id-b', { name: 'b.txt' });
+  DriveApp._registerFile('id-c', { name: 'c.txt' });
+
+  const rows = [
+    ['原檔名'],
+    ['a.txt', '資料夾/a.txt', 'new-a.txt', '目標資料夾/new-a.txt', 'text/plain', 1, new Date(), 'id-a', ''],
+    ['b.txt', '資料夾/b.txt', 'new-b.txt', '目標資料夾/new-b.txt', 'text/plain', 2, new Date(), 'id-b', ''],
+    ['c.txt', '資料夾/c.txt', 'new-c.txt', '目標資料夾/new-c.txt', 'text/plain', 3, new Date(), 'id-c', '']
+  ];
+  const sheet = makeSheet(rows);
+  const renameConfig = { mode: '取代文字', parameter: '', operationType: '複製後更名', targetFolderId: 'target-folder' };
+
+  // 假時鐘：每呼叫一次前進 100ms，budgetMs 設成只夠處理第 1 列
+  let t = 0;
+  const now = function() {
+    const v = t;
+    t += 100;
+    return v;
+  };
+
+  const result1 = executeRenaming(sheet, renameConfig, { now: now, budgetMs: 150 });
+
+  if (!result1.timedOut) {
+    throw new Error('executeRenaming 超時測試失敗：預期第一次呼叫因時間預算不足而中止（timedOut 應為 true）');
+  }
+  if (result1.processedCount !== 1) {
+    throw new Error(`executeRenaming 超時測試失敗：預期只處理 1 列，實際 ${result1.processedCount}`);
+  }
+
+  const afterFirstRun = sheet.getRange(2, 1, 3, 9).getValues();
+  if (typeof afterFirstRun[0][8] !== 'string' || afterFirstRun[0][8].indexOf('✓') !== 0) {
+    throw new Error(`executeRenaming 超時測試失敗：第 1 列應該已標記完成（✓ 開頭），實際 "${afterFirstRun[0][8]}"`);
+  }
+  if (afterFirstRun[1][8] !== '' || afterFirstRun[2][8] !== '') {
+    throw new Error('executeRenaming 超時測試失敗：第 2、3 列在超時前不該被處理，I 欄應維持空白');
+  }
+  if (DriveApp._calls.makeCopy.length !== 1) {
+    throw new Error(`executeRenaming 超時測試失敗：預期只複製 1 次，實際 ${DriveApp._calls.makeCopy.length} 次`);
+  }
+
+  // 模擬使用者看到「已處理 1 列，剩餘 2 列」後，再執行一次「開始重新命名」：
+  // 這次時間充足，且第 1 列已經是 ✓，不該被重複複製
+  const result2 = executeRenaming(sheet, renameConfig, { now: function() { return 0; }, budgetMs: 5 * 60 * 1000 });
+
+  if (result2.timedOut) {
+    throw new Error('executeRenaming 重跑測試失敗：第二次呼叫時間充足，不該再次超時');
+  }
+  if (result2.successCount !== 2) {
+    throw new Error(`executeRenaming 重跑測試失敗：預期這次成功處理 2 列（第 2、3 列），實際 ${result2.successCount}`);
+  }
+  if (DriveApp._calls.makeCopy.length !== 3) {
+    throw new Error(`executeRenaming 重跑測試失敗：預期兩次呼叫總共複製 3 次（第 1 列沒有被重複複製），實際 ${DriveApp._calls.makeCopy.length} 次`);
+  }
+  const copiedSourceIds = DriveApp._calls.makeCopy.map(function(c) { return c.sourceId; });
+  if (copiedSourceIds.filter(function(id) { return id === 'id-a'; }).length !== 1) {
+    throw new Error('executeRenaming 重跑測試失敗：第 1 列（id-a）被重複複製了');
+  }
+}
+
+function testExecuteRenamingFailureIsolated() {
+  DriveApp._reset();
+  DriveApp._registerFile('id-a', { name: 'a.txt' });
+  DriveApp._registerFile('id-c', { name: 'c.txt' });
+  // 故意不註冊 id-b，模擬該檔案的 ID 已經失效／檔案已被刪除
+
+  const rows = [
+    ['原檔名'],
+    ['a.txt', '資料夾/a.txt', 'new-a.txt', '資料夾/new-a.txt', 'text/plain', 1, new Date(), 'id-a', ''],
+    ['b.txt', '資料夾/b.txt', 'new-b.txt', '資料夾/new-b.txt', 'text/plain', 2, new Date(), 'id-b', ''],
+    ['c.txt', '資料夾/c.txt', 'new-c.txt', '資料夾/new-c.txt', 'text/plain', 3, new Date(), 'id-c', '']
+  ];
+  const sheet = makeSheet(rows);
+  const renameConfig = { mode: '取代文字', parameter: '', operationType: '原位置更名', targetFolderId: null };
+
+  const result = executeRenaming(sheet, renameConfig, { now: function() { return 0; }, budgetMs: 5 * 60 * 1000 });
+
+  if (result.successCount !== 2 || result.errorCount !== 1) {
+    throw new Error(`executeRenaming 失敗列隔離測試失敗：預期成功 2、失敗 1，實際成功 ${result.successCount}、失敗 ${result.errorCount}`);
+  }
+
+  const written = sheet.getRange(2, 1, 3, 9).getValues();
+  if (written[0][8].indexOf('✓') !== 0) {
+    throw new Error(`executeRenaming 失敗列隔離測試失敗：第 1 列（正常）應該是 ✓ 開頭，實際 "${written[0][8]}"`);
+  }
+  if (written[1][8].indexOf('✗') !== 0) {
+    throw new Error(`executeRenaming 失敗列隔離測試失敗：第 2 列（缺檔）應該是 ✗ 開頭，實際 "${written[1][8]}"`);
+  }
+  if (written[2][8].indexOf('✓') !== 0) {
+    throw new Error(`executeRenaming 失敗列隔離測試失敗：第 3 列（正常）應該是 ✓ 開頭，實際 "${written[2][8]}"`);
+  }
 }
 
 function generateTestReport() {

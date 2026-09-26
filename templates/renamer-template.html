@@ -108,6 +108,7 @@
                 <th>檔案大小 (bytes)</th>
                 <th>最後修改時間</th>
                 <th>檔案ID（建議隱藏）</th>
+                <th>執行結果</th>
             </tr>
             <tr>
                 <td>document.pdf</td>
@@ -118,6 +119,7 @@
                 <td>1024</td>
                 <td>2024/03/15 10:30:00</td>
                 <td>1AbCdEfGhIjKlMnOpQrStUvWxYz...</td>
+                <td>✓ 已更名 2024-03-15 10:31</td>
             </tr>
             <tr>
                 <td>image.jpg</td>
@@ -128,6 +130,7 @@
                 <td>2048</td>
                 <td>2024/03/16 14:20:00</td>
                 <td>1BcDeFgHiJkLmNoPqRsTuVwXyZ...</td>
+                <td></td>
             </tr>
             <tr>
                 <td>report.xlsx</td>
@@ -138,6 +141,7 @@
                 <td>4096</td>
                 <td>2024/03/17 09:15:00</td>
                 <td>1CdEfGhIjKlMnOpQrStUvWxYz...</td>
+                <td></td>
             </tr>
         </table>
         
@@ -147,6 +151,8 @@
             • <strong>原檔名和原檔案路徑</strong>：由系統自動填入，請勿手動修改<br>
             • <strong>變更後檔名</strong>：可手動編輯或由批次功能自動產生<br>
             • <strong>變更後檔案路徑</strong>：會根據操作類型自動更新<br>
+            • <strong>執行結果</strong>：系統在執行「開始重新命名」時逐列寫入，✓ 開頭表示成功、✗ 開頭表示該列失敗原因；
+              重新執行時已經是 ✓ 的列會直接跳過，不會重複更名或複製，大量檔案分批執行時可放心重跑<br>
             • 請避免在檔名中使用這些字元：/ \ : * ? " < > |
         </div>
     </div>

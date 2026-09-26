@@ -85,7 +85,8 @@ function populateFileList(sheet, files) {
       file.mimeType,
       file.size,
       file.lastModified,
-      file.id
+      file.id,
+      '' // I 欄／執行結果：這是新讀進來的一輪，之前留下的 ✓／✗ 紀錄一律作廢清空
     ];
   });
   
@@ -272,24 +273,55 @@ function getFolderIdFromValue(value) {
   return value;
 }
 
-function executeRenaming(fileListSheet, renameConfig) {
+// GAS 單次執行有 6 分鐘上限，大量檔案可能來不及跑完。executeRenaming 因此設計成可以安全重跑：
+// - 每一列處理完立即把結果寫進 I 欄（執行結果），不等到最後才一次寫回，這樣就算執行途中被
+//   GAS 強制中止，已經完成的列也有紀錄留在試算表上
+// - 開跑時，I 欄已經是「✓ 開頭」的列會直接跳過，不會重新執行一次（複製後更名不會再多複製一份；
+//   原位置更名也不會對已經改完名的檔案再做一次無意義的 setName）
+// - options.now／options.budgetMs 讓測試可以注入假時鐘，不需要真的等 5 分鐘
+function executeRenaming(fileListSheet, renameConfig, options) {
+  options = options || {};
+  const now = options.now || function() { return Date.now(); };
+  const budgetMs = options.budgetMs || (5 * 60 * 1000);
+  const deadline = now() + budgetMs;
+
   const lastRow = fileListSheet.getLastRow();
   if (lastRow < 2) {
     throw new Error('沒有檔案可以處理');
   }
-  
-  const data = fileListSheet.getRange(2, 1, lastRow - 1, 8).getValues();
+
+  const totalRows = lastRow - 1;
+  const data = fileListSheet.getRange(2, 1, totalRows, 9).getValues();
   let successCount = 0;
   let errorCount = 0;
+  let processedCount = 0;
+  let skippedDone = 0;
+  let noChangeCount = 0;
+  let timedOut = false;
   const errors = [];
 
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
-    const [originalName, , newName, , , , , fileId] = row;
+    const [originalName, , newName, , , , , fileId, execResult] = row;
+    const resultCellRow = i + 2; // 對應試算表實際列號（第 1 列是標題）
 
-    if (!originalName || !newName || originalName === newName) {
+    // 冪等：這一列先前已經成功完成過，直接跳過，不重複改名／複製
+    if (typeof execResult === 'string' && execResult.indexOf('✓') === 0) {
+      skippedDone++;
       continue;
     }
+
+    if (now() > deadline) {
+      timedOut = true;
+      break;
+    }
+
+    if (!originalName || !newName || originalName === newName) {
+      noChangeCount++;
+      continue;
+    }
+
+    processedCount++;
 
     try {
       if (!fileId) {
@@ -298,38 +330,59 @@ function executeRenaming(fileListSheet, renameConfig) {
 
       if (renameConfig.operationType === '原位置更名') {
         renameFile(fileId, newName);
+        const timestamp = Utilities.formatDate(new Date(now()), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+        fileListSheet.getRange(resultCellRow, 9).setValue(`✓ 已更名 ${timestamp}`);
       } else if (renameConfig.operationType === '複製後更名') {
         if (!renameConfig.targetFolderId) {
           throw new Error('複製後更名需要設定目標資料夾');
         }
-        copyAndRenameFile(fileId, renameConfig.targetFolderId, newName);
+        const newFileId = copyAndRenameFile(fileId, renameConfig.targetFolderId, newName);
+        fileListSheet.getRange(resultCellRow, 9).setValue(`✓ 已複製 ${newFileId}`);
       }
-      
+
       successCount++;
-      
+
     } catch (error) {
       errorCount++;
       errors.push(`${originalName}: ${error.message}`);
-      
+      fileListSheet.getRange(resultCellRow, 9).setValue(`✗ ${error.message}`);
+
       if (errors.length < 5) {
         console.log(`處理檔案 ${originalName} 時發生錯誤: ${error.message}`);
       }
     }
   }
-  
-  if (errorCount > 0) {
-    const errorMessage = `成功: ${successCount}, 失敗: ${errorCount}\n前幾個錯誤:\n${errors.slice(0, 3).join('\n')}`;
-    throw new Error(errorMessage);
+
+  if (timedOut) {
+    const doneSoFar = skippedDone + noChangeCount + processedCount;
+    const remaining = totalRows - doneSoFar;
+    return {
+      timedOut: true,
+      successCount: successCount,
+      errorCount: errorCount,
+      processedCount: processedCount,
+      errors: errors,
+      message: `已處理 ${processedCount} 列，剩餘 ${remaining} 列，請再執行一次「開始重新命名」`
+    };
   }
-  
-  return successCount;
+
+  return {
+    timedOut: false,
+    successCount: successCount,
+    errorCount: errorCount,
+    processedCount: processedCount,
+    errors: errors,
+    message: errorCount > 0
+      ? `成功: ${successCount}, 失敗: ${errorCount}\n前幾個錯誤:\n${errors.slice(0, 3).join('\n')}`
+      : `成功處理 ${successCount} 個檔案！`
+  };
 }
 
 function applyRulesToExistingFiles(fileListSheet, renameConfig) {
   const lastRow = fileListSheet.getLastRow();
   if (lastRow < 2) return;
-  
-  const data = fileListSheet.getRange(2, 1, lastRow - 1, 8).getValues();
+
+  const data = fileListSheet.getRange(2, 1, lastRow - 1, 9).getValues();
   const newData = [];
   let seq = 0; // 獨立的序號計數器，只在真正處理到的（非空白）列遞增，跟迴圈索引 i 脫鉤
 
@@ -359,14 +412,16 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
         newPath = pathParts.join('/');
       }
 
-      newData.push([originalName, originalPath, newName, newPath, mimeType, size, lastModified, fileId]);
+      // I 欄（執行結果）在這裡一律清空：重新套用規則代表「變更後檔名」是新的一輪，
+      // 之前留下的 ✓／✗ 紀錄已經不對應現在這個檔名了
+      newData.push([originalName, originalPath, newName, newPath, mimeType, size, lastModified, fileId, '']);
     } catch (error) {
-      newData.push(row);
+      newData.push([originalName, originalPath, row[2], row[3], mimeType, size, lastModified, fileId, '']);
       console.log(`處理檔案 ${originalName} 時發生錯誤: ${error.message}`);
     }
   }
 
   if (newData.length > 0) {
-    fileListSheet.getRange(2, 1, newData.length, 8).setValues(newData);
+    fileListSheet.getRange(2, 1, newData.length, 9).setValues(newData);
   }
 }
