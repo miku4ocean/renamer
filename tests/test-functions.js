@@ -5,6 +5,8 @@ function runTests() {
     testFileNameUtilities();
     testFolderIdExtraction();
     testProductionApplyRenameRule();
+    testPopulateFileListSerialNumbering();
+    testApplyRulesToExistingFilesSequentialNumbering();
     console.log('✅ 所有測試通過！');
   } catch (error) {
     console.error('❌ 測試失敗:', error.message);
@@ -74,6 +76,25 @@ function testApplyRenameRuleReplaceText() {
   const result3 = applyRenameRule('document.pdf', '取代文字', '完全取代：final', lastModified);
   if (result3 !== 'final.pdf') {
     throw new Error(`applyRenameRule 完全取代測試失敗: 期望 "final.pdf", 實際 "${result3}"`);
+  }
+
+  // $& / $1 等取代字串必須當成字面值，不能被當成 String.prototype.replace 的特殊樣式
+  // （改用 split/join 而非 RegExp#replace 之後才不會誤觸發）
+  const result4 = applyRenameRule('a-b.txt', '取代文字', '部分取代：-→$&$&', lastModified);
+  if (result4 !== 'a$&$&b.txt') {
+    throw new Error(`applyRenameRule 取代文字含 $& 測試失敗: 期望 "a$&$&b.txt", 實際 "${result4}"`);
+  }
+
+  // 尋找字串為空：不能在每個字元間插入取代文字，應原樣傳回
+  const result5 = applyRenameRule('abc.txt', '取代文字', '部分取代：→_', lastModified);
+  if (result5 !== 'abc.txt') {
+    throw new Error(`applyRenameRule 空尋找字串測試失敗: 期望 "abc.txt", 實際 "${result5}"`);
+  }
+
+  // 參數裡有多個 →：只切第一個箭頭，後面的箭頭要保留在取代文字裡，不能被丟掉
+  const result6 = applyRenameRule('a-b.txt', '取代文字', '部分取代：-→x→y', lastModified);
+  if (result6 !== 'ax→yb.txt') {
+    throw new Error(`applyRenameRule 多個箭頭測試失敗: 期望 "ax→yb.txt", 實際 "${result6}"`);
   }
 }
 
@@ -191,9 +212,86 @@ function testErrorHandling() {
   }
 }
 
+// 下面幾個測試需要 tests/run-node.mjs 提供的 makeSheet／假 SpreadsheetApp／假 DriveApp，
+// 才能在不碰真實 Google Sheets／Drive 的情況下驗證「讀取資料夾檔案」「套用批次規則」
+// 「開始重新命名」這幾條生產路徑。如果整份檔案是直接貼進真正的 GAS 指令碼編輯器執行
+// （這幾個假物件不存在，全域的 SpreadsheetApp/DriveApp 會是真正的服務），
+// 這裡會偵測不到假物件並直接跳過，不會因為呼叫到不存在的方法而噴錯誤。
+
+function testPopulateFileListSerialNumbering() {
+  console.log('🧪 測試 populateFileList 序號規則（bug: 讀取資料夾檔案時序號全部相同）...');
+
+  if (typeof SpreadsheetApp === 'undefined' || typeof SpreadsheetApp._setSheet !== 'function') {
+    console.log('⏭️  跳過（僅限 node tests/run-node.mjs 跑者，GAS 編輯器內沒有假 SpreadsheetApp）');
+    return;
+  }
+
+  const commandSheet = {
+    getRange: function(cell) {
+      const values = { B3: '', B4: '新增序號', B5: '前綴序號：1,3', B6: '原位置更名' };
+      return { getValue: function() { return values[cell] !== undefined ? values[cell] : ''; } };
+    }
+  };
+  SpreadsheetApp._setSheet('指令區', commandSheet);
+
+  const fileListSheet = makeSheet([[]]);
+  const lastModified = new Date('2024-03-15T10:30:00');
+  const files = [
+    { name: 'a.txt', path: '資料夾/a.txt', mimeType: 'text/plain', size: 1, lastModified: lastModified, id: 'id-a' },
+    { name: 'b.txt', path: '資料夾/b.txt', mimeType: 'text/plain', size: 2, lastModified: lastModified, id: 'id-b' },
+    { name: 'c.txt', path: '資料夾/c.txt', mimeType: 'text/plain', size: 3, lastModified: lastModified, id: 'id-c' }
+  ];
+
+  populateFileList(fileListSheet, files);
+
+  const written = fileListSheet.getRange(2, 1, 3, 8).getValues();
+  const expectedNames = ['001_a.txt', '002_b.txt', '003_c.txt'];
+  expectedNames.forEach(function(expected, idx) {
+    const actual = written[idx][2];
+    if (actual !== expected) {
+      throw new Error('populateFileList 序號測試失敗（第 ' + (idx + 1) + ' 筆）: 期望 "' + expected + '", 實際 "' + actual + '"');
+    }
+  });
+
+  console.log('✅ populateFileList 序號規則測試通過（讀取資料夾後每個檔案序號不再全部相同）');
+}
+
+function testApplyRulesToExistingFilesSequentialNumbering() {
+  console.log('🧪 測試 applyRulesToExistingFiles 空列不佔用序號...');
+
+  if (typeof makeSheet !== 'function') {
+    console.log('⏭️  跳過（僅限 node tests/run-node.mjs 跑者，GAS 編輯器內沒有 makeSheet）');
+    return;
+  }
+
+  const lastModified = new Date('2024-03-15T10:30:00');
+  const rows = [
+    ['原檔名'],
+    ['a.txt', '資料夾/a.txt', 'old', 'old', 'text/plain', 1, lastModified, 'id-a'],
+    ['', '', '', '', '', '', '', ''],
+    ['b.txt', '資料夾/b.txt', 'old', 'old', 'text/plain', 2, lastModified, 'id-b'],
+    ['c.txt', '資料夾/c.txt', 'old', 'old', 'text/plain', 3, lastModified, 'id-c']
+  ];
+  const fileListSheet = makeSheet(rows);
+  const renameConfig = { mode: '新增序號', parameter: '前綴序號：1,3', operationType: '原位置更名', targetFolderId: null };
+
+  applyRulesToExistingFiles(fileListSheet, renameConfig);
+
+  const written = fileListSheet.getRange(2, 1, 3, 8).getValues();
+  const expectedNames = ['001_a.txt', '002_b.txt', '003_c.txt'];
+  expectedNames.forEach(function(expected, idx) {
+    const actual = written[idx][2];
+    if (actual !== expected) {
+      throw new Error('applyRulesToExistingFiles 序號連號測試失敗（第 ' + (idx + 1) + ' 筆）: 期望 "' + expected + '", 實際 "' + actual + '"');
+    }
+  });
+
+  console.log('✅ applyRulesToExistingFiles 空列不佔用序號測試通過');
+}
+
 function generateTestReport() {
   console.log('📊 生成測試報告...');
-  
+
   const report = {
     timestamp: new Date().toISOString(),
     testSuite: 'Renamer Unit Tests',

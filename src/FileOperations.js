@@ -52,13 +52,13 @@ function populateFileList(sheet, files) {
   const commandSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('指令區');
   const renameConfig = getRenameConfigFromSheet(commandSheet);
   
-  const data = files.map(file => {
+  const data = files.map((file, index) => {
     let newName = file.name;
     let newPath = file.path;
-    
+
     if (renameConfig && renameConfig.mode && renameConfig.parameter) {
       try {
-        newName = applyRenameRule(file.name, renameConfig.mode, renameConfig.parameter, file.lastModified);
+        newName = applyRenameRule(file.name, renameConfig.mode, renameConfig.parameter, file.lastModified, index);
         
         if (renameConfig.operationType === '複製後更名' && renameConfig.targetFolderId) {
           try {
@@ -148,15 +148,28 @@ function applyReplaceTextRule(baseName, parameter, extension) {
     const newName = parameter.replace('完全取代：', '');
     return newName + extension;
   } else if (parameter.includes('→')) {
-    const [findText, replaceText] = parameter.split('→');
-    const literalFindText = findText.replace('部分取代：', '');
-    return baseName.replace(new RegExp(escapeRegExp(literalFindText), 'g'), replaceText) + extension;
+    // 只切第一個箭頭：「部分取代：-→x→y」的取代文字要保留成 "x→y"，後面的箭頭不是分隔符
+    const arrowIndex = parameter.indexOf('→');
+    const findPart = parameter.substring(0, arrowIndex);
+    const replaceText = parameter.substring(arrowIndex + 1);
+    const literalFindText = findPart.replace('部分取代：', '');
+
+    if (literalFindText === '') {
+      // 尋找字串為空：沒有東西可比對，原樣傳回，不能讓 split('')/join() 在每個字元間插入
+      return baseName + extension;
+    }
+
+    // 用 split/join 做「字面字串」取代，不建 RegExp：
+    // 1) 取代文字裡的 $&、$1 等不會被當成正則特殊語法，只當一般字面字串
+    // 2) 尋找字串裡的正則特殊字元（. * + ? 等）也不用跳脫，天生就是字面比對
+    // 3) 沒有正則就沒有 ReDoS 風險
+    return baseName.split(literalFindText).join(replaceText) + extension;
   }
   return baseName + extension;
 }
 
-// 將使用者輸入的字面字串跳脫成安全的正則表達式片段，避免 ReDoS 與正則注入
-// （例如使用者只是想字面取代「.」，不應被當成萬用字元）
+// 保留給既有測試（testEscapeRegExp）使用；applyReplaceTextRule 已改用 split/join 做字面取代，
+// 不再需要靠這支函式跳脫特殊字元建 RegExp。
 function escapeRegExp(string) {
   return String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -318,6 +331,7 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
   
   const data = fileListSheet.getRange(2, 1, lastRow - 1, 8).getValues();
   const newData = [];
+  let seq = 0; // 獨立的序號計數器，只在真正處理到的（非空白）列遞增，跟迴圈索引 i 脫鉤
 
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
@@ -325,8 +339,11 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
 
     if (!originalName) continue;
 
+    const currentSeq = seq;
+    seq++;
+
     try {
-      let newName = applyRenameRule(originalName, renameConfig.mode, renameConfig.parameter, lastModified, i);
+      let newName = applyRenameRule(originalName, renameConfig.mode, renameConfig.parameter, lastModified, currentSeq);
       let newPath = originalPath;
 
       if (renameConfig.operationType === '複製後更名' && renameConfig.targetFolderId) {
