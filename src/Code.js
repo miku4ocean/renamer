@@ -52,8 +52,34 @@ function startRenaming() {
       ui.alert('錯誤', '請先設定重新命名參數。', ui.ButtonSet.OK);
       return;
     }
-    
-    const result = ui.alert('確認操作', 
+
+    const lastRow = fileListSheet.getLastRow();
+    if (lastRow >= 2) {
+      const precheckData = fileListSheet.getRange(2, 1, lastRow - 1, 9).getValues();
+
+      const emptyNameCount = precheckData.filter(function(row) {
+        return row[0] && (!row[2] || String(row[2]).trim() === '');
+      }).length;
+      if (emptyNameCount > 0) {
+        ui.alert('錯誤', `有 ${emptyNameCount} 列「變更後檔名」是空白，請修正後再執行。`, ui.ButtonSet.OK);
+        return;
+      }
+
+      const duplicates = findDuplicateTargets(precheckData, renameConfig.operationType);
+      if (duplicates.length > 0) {
+        const preview = duplicates.slice(0, 5).map(function(d) {
+          return `「${d.name}」共 ${d.rows.length} 筆`;
+        }).join('\n');
+        const dupConfirm = ui.alert('發現重複的目標檔名',
+          `以下變更後檔名會重複（Drive 允許同名並存，但可能造成混淆）：\n${preview}\n\n確定要繼續嗎？`,
+          ui.ButtonSet.YES_NO);
+        if (dupConfirm !== ui.Button.YES) {
+          return;
+        }
+      }
+    }
+
+    const result = ui.alert('確認操作',
       `準備執行以下操作：\n模式：${renameConfig.mode}\n參數：${renameConfig.parameter}\n操作類型：${renameConfig.operationType}\n\n確定要繼續嗎？`, 
       ui.ButtonSet.YES_NO);
     

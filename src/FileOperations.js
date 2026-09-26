@@ -425,3 +425,40 @@ function applyRulesToExistingFiles(fileListSheet, renameConfig) {
     fileListSheet.getRange(2, 1, newData.length, 9).setValues(newData);
   }
 }
+
+// 執行「開始重新命名」前的預檢：同一批次（單一來源資料夾或單一目標資料夾，見下方說明）裡，
+// 若有 2 筆以上「變更後檔名」相同（不分大小寫）且尚未完成，Drive 允許同名檔案並存，
+// 會靜默產生一堆同名檔，所以要先抓出來讓使用者確認。
+// data：檔名變更區的資料列陣列，每列至少含 9 欄（C 欄=索引2 變更後檔名，I 欄=索引8 執行結果）
+// operationType：目前保留參數但不影響分組邏輯——getFilesFromFolder 只讀單一來源資料夾的直屬檔案，
+// 「複製後更名」的目標資料夾也是單一整批共用同一個，所以同一批次裡的檔名本來就只需要互相比對，
+// 不需要依 operationType 拆組。
+function findDuplicateTargets(data, operationType) {
+  const groups = {};
+
+  data.forEach(function(row, index) {
+    const newName = row[2];
+    const execResult = row[8];
+
+    if (!newName) return;
+    if (typeof execResult === 'string' && execResult.indexOf('✓') === 0) return; // 已完成的列不算
+
+    const key = String(newName).trim().toLowerCase();
+    if (!key) return;
+
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ index: index, newName: newName });
+  });
+
+  const duplicates = [];
+  Object.keys(groups).forEach(function(key) {
+    if (groups[key].length >= 2) {
+      duplicates.push({
+        name: groups[key][0].newName,
+        rows: groups[key].map(function(g) { return g.index; })
+      });
+    }
+  });
+
+  return duplicates;
+}

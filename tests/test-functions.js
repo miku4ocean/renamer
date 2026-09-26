@@ -8,6 +8,7 @@ function runTests() {
     testPopulateFileListSerialNumbering();
     testApplyRulesToExistingFilesSequentialNumbering();
     testExecuteRenamingIdempotency();
+    testFindDuplicateTargets();
     console.log('✅ 所有測試通過！');
   } catch (error) {
     console.error('❌ 測試失敗:', error.message);
@@ -398,6 +399,47 @@ function testExecuteRenamingFailureIsolated() {
   if (written[2][8].indexOf('✓') !== 0) {
     throw new Error(`executeRenaming 失敗列隔離測試失敗：第 3 列（正常）應該是 ✓ 開頭，實際 "${written[2][8]}"`);
   }
+}
+
+function testFindDuplicateTargets() {
+  console.log('🧪 測試 findDuplicateTargets 重複目標檔名預檢（bug: 目標檔名重複沒有預檢）...');
+
+  // 案例 1：無重複
+  const noDupData = [
+    ['a.txt', '', 'new-a.txt', '', '', '', '', 'id-a', ''],
+    ['b.txt', '', 'new-b.txt', '', '', '', '', 'id-b', '']
+  ];
+  const noDupResult = findDuplicateTargets(noDupData, '原位置更名');
+  if (noDupResult.length !== 0) {
+    throw new Error(`findDuplicateTargets 無重複案例失敗: 期望 0 組，實際 ${noDupResult.length} 組`);
+  }
+
+  // 案例 2：有重複；其中一列已經是 ✓（已完成），不該被算進重複組
+  const dupData = [
+    ['a.txt', '', 'same.txt', '', '', '', '', 'id-a', ''],
+    ['b.txt', '', 'same.txt', '', '', '', '', 'id-b', ''],
+    ['c.txt', '', 'same.txt', '', '', '', '', 'id-c', '✓ 已更名 2024-01-01 00:00'],
+    ['d.txt', '', 'other.txt', '', '', '', '', 'id-d', '']
+  ];
+  const dupResult = findDuplicateTargets(dupData, '原位置更名');
+  if (dupResult.length !== 1) {
+    throw new Error(`findDuplicateTargets 重複案例失敗: 期望 1 組重複，實際 ${dupResult.length} 組`);
+  }
+  if (dupResult[0].rows.length !== 2) {
+    throw new Error(`findDuplicateTargets 重複案例失敗: 期望重複組內有 2 筆（已完成的 ✓ 列不算），實際 ${dupResult[0].rows.length} 筆`);
+  }
+
+  // 案例 3：大小寫不同也要視為重複（Drive 檔名比對不分大小寫的使用情境）
+  const caseDupData = [
+    ['a.txt', '', 'Report.pdf', '', '', '', '', 'id-a', ''],
+    ['b.txt', '', 'report.PDF', '', '', '', '', 'id-b', '']
+  ];
+  const caseDupResult = findDuplicateTargets(caseDupData, '原位置更名');
+  if (caseDupResult.length !== 1) {
+    throw new Error(`findDuplicateTargets 大小寫重複案例失敗: 期望 1 組重複，實際 ${caseDupResult.length} 組`);
+  }
+
+  console.log('✅ findDuplicateTargets 重複目標檔名預檢測試通過');
 }
 
 function generateTestReport() {
