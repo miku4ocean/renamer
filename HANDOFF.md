@@ -1,48 +1,117 @@
 # HANDOFF — Renamer
-更新：2026-08-18／claude（修上一輪發現的 3 個真 bug，用 Node.js vm 載入 src/*.js 跑 fixture 驗證，未動 Google 帳號）
+更新：2026-09-26／Claude Opus 5.5（依規劃檔 `plan-90/Renamer.md` 依序做完 WP1–WP4，
+均為先紅後綠：先用 node:vm 探針重現 bug，修完再驗證，未動 Google 帳號、未執行 clasp push）
 
 ## 目前目標
-Google Apps Script 批次更名工具，功能完整，維護與文件完善階段。
+Google Apps Script 批次更名工具，功能完整，維護與文件完善階段。程式碼層預估已到規劃檔說的
+90%（WP1–WP4 全數完成）；再往上需要 clasp push 到真實 GAS 環境手動測試，屬下面「卡點」。
 
-## 狀態
-- 已完成：BatchRename.js、Code.js、FileOperations.js 核心邏輯；多樣命名規則（取代、序號、日期、大小寫）；`docs/` 批次更名規則說明
-- 本次修完上一輪發現的 3 個真 bug（見下），29 個既有測試斷言全過，新增 7 個
-- 驗收現況：仍未在真實 GAS 環境跑過（需部署手動測試）；本次以 Node.js vm 載入 `src/*.js`（Utilities/Session 打樁）跑 fixture 驗證邏輯層
+## 本機測試（本輪新增，之前沒有）
+```
+npm test
+```
+`tests/run-node.mjs` 用 `node:vm` 把 `src/Code.js`、`src/FileOperations.js`、
+`tests/test-functions.js` 載進同一個假環境執行 `runTests()`：
+- 打樁 `Utilities.formatDate`／`Session.getScriptTimeZone`（固定 Asia/Taipei）
+- 提供 `makeSheet(rows)`：假 Sheet，支援 `getRange`（A1 或數字座標兩種呼叫方式）、
+  `getValues`/`setValues`/`setValue`/`clearContent`、`getLastRow`/`getLastColumn`
+- 提供假 `DriveApp`（`_registerFile`/`_registerFolder`/`_reset`，記錄 `setName`／`makeCopy`
+  呼叫到 `DriveApp._calls`）與假 `SpreadsheetApp`（`_setSheet(name, sheet)`）
+- `runTests()` 原本把測試失敗吞掉只 `console.error`，已改成重新拋出，`npm test` 會用
+  exit code 正確反映測試結果（0＝全過，1＝有失敗）
 
-## 本次修掉的 3 個真 bug
+**重要限制**：`tests/test-functions.js` 裡涉及 `makeSheet`／假 `DriveApp`／假
+`SpreadsheetApp` 的測試（`testPopulateFileListSerialNumbering`、
+`testApplyRulesToExistingFilesSequentialNumbering`、`testExecuteRenamingIdempotency`）
+開頭都有 `typeof ... === 'undefined'` 的偵測，如果整份檔案直接貼進真正的 GAS
+指令碼編輯器執行（沒有這些假物件，全域的 `DriveApp`/`SpreadsheetApp` 是真正的服務），
+會印出「⏭️ 跳過」直接略過，不會誤觸真實 Drive/Sheets 操作，也不會因為呼叫到不存在
+的方法而噴錯誤。`testFindDuplicateTargets` 是純函數測試，兩邊都會正常執行。
 
-1. **重新命名靠檔名重查，不是靠已抓到的 File ID（TOCTOU + 改錯檔）**——已修。
-   - `populateFileList()`（FileOperations.js）現在把 `file.id` 一起寫進「檔名變更區」的第 8 欄（H欄／檔案ID），跟掃描時 `getFilesFromFolder()` 抓到的 ID 是同一份。
-   - `executeRenaming()` 改成直接讀 H 欄的 ID 呼叫 `DriveApp.getFileById(fileId)`，不再用檔名/資料夾名稱重新搜尋 Drive；缺 ID 時該筆直接報錯（`缺少檔案 ID，請重新執行「讀取資料夾檔案」`），不會誤改到別的同名檔案。
-   - `applyRulesToExistingFiles()` 也同步保留/回寫 H 欄，避免重套規則時把 ID 弄丟。
-   - 已完全刪除易出錯的 `getFileIdByNameAndPath()`（原本會 fallback 成 `DriveApp.getFoldersByName()` 掃全 Drive 同名資料夾）。
-   - 連帶更新的文件（讓新架構有文件可查）：`docs/setup-guide.md`、`docs/api-reference.md`、`docs/architecture.mmd/.svg/.html`、`templates/filelist-sheet-template.md`、`templates/google-sheets-formatting-guide.md`、`templates/renamer-template.html`、`templates/create_excel_template.py`、`templates/檔名變更區.csv`，全部補上 H欄／檔案ID 的說明（建議隱藏、不可刪除）。
+## 本輪做完的 4 個工作包（WP1–WP4）
 
-2. **正則表達式注入／ReDoS**——已修。
-   - 新增 `escapeRegExp()`（FileOperations.js），把使用者輸入的「部分取代」尋找字串在丟進 `new RegExp()` 前先跳脫特殊字元。
-   - `FileOperations.js` 的 `applyReplaceTextRule()` 與 `BatchRename.js` 的 `applyReplaceText()`（死碼但同款漏洞）都已套用；後者靠 GAS 專案共用全域作用域直接呼叫前者定義的 `escapeRegExp`。
-   - 驗證：`report.v1.final` 用「.」取代「_」現在正確回傳 `report_v1_final`（跳脫前會整串被吃光）。
+### WP1：補進 Node 測試入口
+新增 `tests/run-node.mjs`、`package.json`（只有 test script，無 dependencies）。之前
+`runTests()` 測試失敗會被吞掉，已修成重新拋出。
 
-3. **測試套件本身壞的 + 生產路徑零測試**——已修。
-   - `tests/test-functions.js` 的 `.hidden-file` 案例預期值改成跟程式碼實際行為一致（`expectedName: '.hidden-file', expectedExt: ''`）。
-   - 新增 `testProductionApplyRenameRule()`（涵蓋 `FileOperations.js` 的生產路徑 `applyRenameRule`：取代文字含正則特殊字元、完全取代、新增序號、大小寫轉換）與 `testEscapeRegExp()`，並掛進 `runTests()` 主流程。之前 `runTests()` 只測到沒人呼叫的死碼 `applyBatchRename`（BatchRename.js）。
+### WP2：修序號 index 與取代規則的 3 個真 bug
+1. `populateFileList()`（`src/FileOperations.js`）：`files.map(file => ...)` 沒把
+   `index` 傳給 `applyRenameRule`，導致「讀取資料夾檔案」流程下新增序號規則全部拿到
+   同一個號碼（001_...），已改成 `files.map((file, index) => ...)`。
+2. `applyReplaceTextRule()`：原本用 `new RegExp(escapeRegExp(...))` + `String#replace`，
+   有三個問題：取代文字裡的 `$&`/`$1` 會被當成正則特殊樣式、尋找字串為空時會在每個字元
+   間插入、參數裡有多個 `→` 時第二個以後的內容會被丟掉。改用
+   `baseName.split(literalFindText).join(replaceText)`：只切第一個 `→`（後面的 `→`
+   保留在取代文字裡）、空尋找字串原樣回傳、取代文字一律當字面值處理，順帶徹底解決
+   ReDoS／正則注入疑慮。`escapeRegExp` 保留給既有測試用，不再被生產路徑呼叫。
+3. `applyRulesToExistingFiles()`：遇到空白列 `continue` 時序號會跳號，改成獨立計數器
+   `seq`，只在真正處理到的列遞增。
 
-## 順便確認沒問題的項目
-- 無 `eval`/`new Function`，`src/` 沒有 Node.js 或瀏覽器限定 API（`require`/`fetch`/`document`/`window` 皆無），GAS 相容性乾淨
-- 中文檔名、emoji（astral surrogate pair）檔名跑過大小寫轉換規則不會被截斷/corrupt
-- `applyBatchRename`（BatchRename.js）整組函式仍是死碼（`Code.js`/`FileOperations.js` 沒人呼叫），本次沒有處理「刪除死碼」這件事，留給下一輪評估
+`docs/batch-rename-rules-guide.md` 已補上取代規則行為細節（字面比對、只切第一個箭頭、
+空尋找字串處理）。
 
-## 下一步（接手的人從這裡開始）
-1. 安裝 clasp：`npm install -g @google/clasp`，登入後 `clasp push`（**注意：目錄下無 `.clasp.json`，需先 `clasp create`/`clasp clone` 建立**，progress.md 已記錄此缺口）
-2. 在 Google Sheets 綁定此 Script，手動執行選單項目確認功能——**尤其要驗證新的 H 欄（檔案ID）**：讀取資料夾檔案後 H 欄應自動填入 Drive 檔案 ID，重新命名後該 ID 對應的檔案要正確被改名
-3. 評估是否直接刪除死碼 `applyBatchRename`（BatchRename.js）及其專屬輔助函式，或保留作為未來重構的參考
-4. 若需新規則，在 `src/BatchRename.js` 照現有模式新增（但先評估併入 `FileOperations.js`，見 progress.md J 段）
+### WP3：executeRenaming 冪等化＋I 欄執行結果＋時間預算
+「檔名變更區」新增 I 欄（執行結果），H 欄仍是檔案 ID，欄位改動已同步檢查
+`populateFileList`／`applyRulesToExistingFiles`／`executeRenaming` 三處（8 欄改 9 欄）。
+`executeRenaming` 每處理完一列立即 `setValue` 寫入 I 欄（`✓ 已更名 yyyy-MM-dd HH:mm`／
+`✓ 已複製 <新檔案ID>`／`✗ <錯誤訊息>`），開跑時 I 欄已是 `✓` 開頭的列直接跳過（冪等，
+重跑不會重複複製／重新命名）。新增 `options.now`／`options.budgetMs`（預設 5 分鐘）算
+deadline，超時就停止並回傳 `{timedOut:true, message:"已處理 N 列，剩餘 M 列，請再執行
+一次「開始重新命名」"}`，不當成錯誤丟出。**回傳值型別已改變**：`executeRenaming` 現在
+回傳物件 `{timedOut, successCount, errorCount, processedCount, errors, message}`，不再
+是單純的數字，`Code.js` 的 `startRenaming()` 已同步更新依 `timedOut`/`errorCount` 顯示
+不同的 alert。`templates/` 下 4 個檔案已同步補上 I 欄說明。
+
+### WP4：執行前預檢重複目標檔名
+新增 `findDuplicateTargets(data, operationType)`（純函數）：依「變更後檔名」分組（不分
+大小寫），排除已完成（I 欄 ✓）的列，回傳達 2 筆以上的重複組。`startRenaming()` 在原本
+的確認對話框前新增兩道檢查：C 欄空白直接擋下（不給確認）；有重複目標檔名則列出前 5 組
+用 YES_NO 再次確認。
+
+## 沒做的部分（規劃檔標 [H]／[D]／[X]，本輪刻意跳過）
+- **WP5**（clasp 部署前準備）：新增 `.claspignore`／`.clasp.json.example` 未做。
+- **WP6**（清除 27 處過期的 `BatchRename` 文件參照）：`HANDOFF.md`（本檔已在改寫時順便
+  清掉自己的舊參照，其餘檔案未動）、`progress.md`、`docs/setup-guide.md`、
+  `docs/api-reference.md`、`docs/architecture.mmd/.html/.svg`、`mockup/sheet-command.html`、
+  `tests/test-functions.js` 的 `testErrorHandling`/`generateTestReport` 裡仍有
+  `BatchRename`／`batchRenameLogic` 字樣未清。`grep -rn "BatchRename" . --exclude-dir=.git`
+  目前還有多筆。
+- **WP7**（`appsscript.json` 明確宣告 `oauthScopes`）：規劃檔標示「預設不做，由使用者
+  決定」，本輪沒有動 `appsscript.json`。
+
+## 卡點（跳出程式碼層，需要人／帳號才能做）
+- `npm i -g @google/clasp`、`clasp login`、`clasp create --type sheets`（或 clone 既有
+  腳本拿 scriptId）、`clasp push`——本專案沒有 `.clasp.json`，且未安裝 clasp。
+- 在真實 Google Sheets／Drive 手動跑一遍：讀取→套用→重新命名、複製後更名，驗證 H 欄
+  ID、**I 欄執行結果**、超時續跑三件事在真實環境下的行為（本輪只在 node:vm 假環境驗證）。
+- `appsscript.json` 的 `oauthScopes` 要不要明確宣告（WP7），等實機測試時一起處理。
 
 ## 地雷（別踩）
-- GAS 有執行時間上限（6 分鐘），批次大量檔案需分批呼叫
-- `templates/` 目錄存放試算表範本，勿刪除（使用者需匯入作為起點）；本次已同步更新其中的欄位結構，記得若再改 schema 要一併更新這批文件
-- `appsscript.json` 的 `oauthScopes` 需精確，過寬會觸發 Google Workspace 安全審查
-- H 欄（檔案ID）是重新命名機制的核心，任何改動「檔名變更區」欄位配置的程式碼都要連帶檢查 `executeRenaming`/`applyRulesToExistingFiles`/`populateFileList` 三者的欄位索引是否還對得上
+- GAS 有執行時間上限（6 分鐘）；`executeRenaming` 已用 `options.budgetMs` 處理，預設
+  5 分鐘，留 1 分鐘餘裕。
+- `templates/` 目錄存放試算表範本，勿刪除；本輪已同步更新其中的欄位結構（新增 I 欄），
+  若再改 schema 要一併更新這批文件。
+- `appsscript.json` 的 `oauthScopes` 需精確，過寬會觸發 Google Workspace 安全審查。
+- **欄位索引地雷**：任何改動「檔名變更區」欄位配置的程式碼，都要同時檢查
+  `populateFileList`／`applyRulesToExistingFiles`／`executeRenaming`／
+  `findDuplicateTargets` 這四處的欄位索引是否還對得上（目前是 9 欄：A~I）。
+- `tests/run-node.mjs` 是本機測試跑者，不是給 clasp push 的（WP5 的 `.claspignore` 要
+  排除它，還沒做）。
+- `executeRenaming` 的回傳值已經是物件不是數字，如果之後有其他地方直接呼叫
+  `executeRenaming()` 並把回傳值當數字用，會壞掉。
+
+## 下一步（接手的人從這裡開始）
+1. 先跑 `npm test` 確認綠燈（無需 npm install，純 Node 內建模組）。
+2. 做 WP5：`.claspignore`（排除 `docs/**`/`mockup/**`/`templates/**`/
+   `tests/run-node.mjs`/`*.md`/`package.json`）、`.clasp.json.example`、`.gitignore`
+   加 `.clasp.json`。
+3. 做 WP6：清掉 `progress.md`/`docs/setup-guide.md`/`docs/api-reference.md`/
+   `docs/architecture.*`/`mockup/sheet-command.html`/`tests/test-functions.js` 裡
+   殘留的 `BatchRename` 參照（`BatchRename.js` 本身在更早的輪次已經整組刪除，這些只是
+   文件沒跟上）。
+4. 安裝 clasp、`clasp create`/`clasp clone` 取得 scriptId、`clasp push`，在真實
+   Google Sheets 綁定此腳本，手動驗證 I 欄與超時續跑機制。
+5. 若要動 WP7 的 `oauthScopes`，建議跟第 4 步的實機驗證一起做。
 
 ## 主辦權
 單線／待分派
