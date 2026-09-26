@@ -67,7 +67,7 @@ footer{margin-top:40px; font-size:12px; color:var(--muted); border-top:1px solid
     <p class="subtitle">架構圖 · docs/architecture.html</p>
     <div class="meta">
       <div><b>專案類型：</b>Google Apps Script 批次改名工具（Google Sheets 介面操作 Google Drive）</div>
-      <div><b>依據：</b>src/Code.js・src/FileOperations.js・src/BatchRename.js・appsscript.json・HANDOFF.md</div>
+      <div><b>依據：</b>src/Code.js・src/FileOperations.js・appsscript.json・HANDOFF.md</div>
     </div>
   </header>
 
@@ -145,10 +145,10 @@ footer{margin-top:40px; font-size:12px; color:var(--muted); border-top:1px solid
 
   <line x1="560" y1="430" x2="560" y2="466" stroke="#6B7178" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-  <text x="40" y="492" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">③ 命名規則運算層 — SRC/BATCHRENAME.JS（純函數，TESTS/ 可單元測試）</text>
+  <text x="40" y="492" font-family="ui-monospace,monospace" font-size="12" letter-spacing="1.5" fill="#6B7178">③ 命名規則運算層 — SRC/FILEOPERATIONS.JS</text>
   <rect x="20" y="500" width="1080" height="120" rx="9" fill="#FBFAF7" stroke="#E7E3DA"/>
   <rect x="40" y="515" width="1040" height="46" rx="8" fill="#FBFAF7" stroke="#E7E3DA"/>
-  <text x="560" y="543" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="#181B20">applyBatchRename() / applyRenameRule() — 規則分派器</text>
+  <text x="560" y="543" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="#181B20">applyRenameRule() — 規則分派器</text>
 
   <g font-size="11.5" fill="#181B20">
     <rect x="40" y="571" width="195" height="34" rx="6" fill="#EAEEF7" stroke="#E7E3DA"/>
@@ -226,7 +226,7 @@ footer{margin-top:40px; font-size:12px; color:var(--muted); border-top:1px solid
       <p class="section-title">架構判讀 build-log</p>
       <ul class="buildlog">
         <li class="s-ok">五層皆對應到實際存在的檔案 / 工作表 / 選單項目</li>
-        <li class="s-ok">命名規則邏輯（BatchRename.js）為純函數，與 Sheet／Drive 讀寫分離</li>
+        <li class="s-ok">命名規則邏輯（applyRenameRule() 在 FileOperations.js）為純函數，與 Sheet／Drive 讀寫分離</li>
         <li class="s-progress">startRenaming() 在 src/Code.js 已有完整實作，但 docs/api-reference.md 仍標記「開發中」——文件落後於程式碼</li>
         <li class="s-ok">無資料庫、無自建伺服器、無第三方 API 依賴</li>
         <li class="s-warn">GAS 6 分鐘執行上限：大量檔案需分批，程式碼未見自動分批機制（未確認是否已處理）</li>
@@ -235,7 +235,7 @@ footer{margin-top:40px; font-size:12px; color:var(--muted); border-top:1px solid
   </div>
 
   <footer>
-    Renamer · docs/architecture.html · 依 src/Code.js、src/FileOperations.js、src/BatchRename.js、appsscript.json、HANDOFF.md 實際內容繪製，查無佐證之處已標「未確認」。
+    Renamer · docs/architecture.html · 依 src/Code.js、src/FileOperations.js、appsscript.json、HANDOFF.md 實際內容繪製，查無佐證之處已標「未確認」。
   </footer>
 
 </div>

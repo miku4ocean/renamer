@@ -1,6 +1,7 @@
 # Google Apps Script
 *.gs.backup
 *.gs~
+.clasp.json
 
 # macOS
 .DS_Store

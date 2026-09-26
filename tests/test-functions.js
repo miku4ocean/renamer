@@ -48,7 +48,6 @@ function testFileNameUtilities() {
 }
 
 // 生產路徑測試：applyRenameRule 是 FileOperations.js 真正被 Code.js 呼叫的核心邏輯
-// （原本的 applyBatchRename／BatchRename.js 是沒人呼叫的死碼，連同其專屬測試已一併移除）
 function testProductionApplyRenameRule() {
   console.log('🧪 測試生產路徑 applyRenameRule（FileOperations.js）...');
 
@@ -450,7 +449,7 @@ function generateTestReport() {
     testSuite: 'Renamer Unit Tests',
     results: {
       fileNameUtilities: '通過',
-      batchRenameLogic: '通過',
+      renameRuleLogic: '通過',
       folderIdExtraction: '通過',
       errorHandling: '通過'
     },

@@ -35,9 +35,6 @@
 **FileOperations.gs**
 - 複製 `/src/FileOperations.js` 的內容
 
-**BatchRename.gs**
-- 複製 `/src/BatchRename.js` 的內容
-
 #### 2.3 設定專案資訊
 
 1. 點擊左側「專案設定」

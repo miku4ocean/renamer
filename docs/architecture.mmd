@@ -1,5 +1,5 @@
 %% Renamer — 架構圖（Mermaid flowchart TB）
-%% 依實際程式碼繪製：src/Code.js, src/FileOperations.js, src/BatchRename.js, appsscript.json
+%% 依實際程式碼繪製：src/Code.js, src/FileOperations.js, appsscript.json
 %% Keystone：無後端伺服器／資料庫／第三方 API，全部跑在使用者自己的 Google 帳號內；
 %% 且「套用規則」與「真正寫入 Drive」之間，隔著可手動編輯的「檔名變更區」預覽關卡。
 
@@ -19,8 +19,8 @@ flowchart TB
         ONOPEN["onOpen()\n建立自訂選單"]
     end
 
-    subgraph L3["③ 命名規則運算層 — src/BatchRename.js（純函數，tests/ 可單元測試）"]
-        R["applyBatchRename()\napplyRenameRule() 分派五種規則：\n新增文字・取代文字・大小寫轉換・新增序號・格式化日期"]
+    subgraph L3["③ 命名規則運算層 — src/FileOperations.js"]
+        R["applyRenameRule() 分派五種規則：\n新增文字・取代文字・大小寫轉換・新增序號・格式化日期"]
     end
 
     subgraph L4["④ 資料存取層 — src/FileOperations.js"]

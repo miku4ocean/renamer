@@ -26,7 +26,7 @@ Renamer 是一個以 **Google Apps Script（V8 執行環境）** 為基礎的雲
   - 套用批次規則（`applyBatchRules()`）：對「檔名變更區」既有資料重新套用目前設定的命名規則，不重新掃描 Drive。
   - 開始重新命名（`startRenaming()`）：跳出 YES/NO 確認對話框，確認後才真正呼叫 Drive 執行更名／複製。
   - 清除所有資料（`clearAllData()`）：確認後清空「檔名變更區」第 2 列以下的資料。
-- **五種命名規則**（`src/BatchRename.js` / `src/FileOperations.js`）：
+- **五種命名規則**（`src/FileOperations.js`）：
   - 新增文字（前綴／後綴／前後皆加）
   - 取代文字（完全取代／部分取代，支援正規表示式取代）
   - 大小寫轉換（全部大寫／全部小寫／首字母大寫）
@@ -67,7 +67,6 @@ Renamer 是一個以 **Google Apps Script（V8 執行環境）** 為基礎的雲
 ## H. 目前已完成項目
 - `src/Code.js`：選單建立與四個選單事件函數（`onOpen`、`loadFolderFiles`、`applyBatchRules`、`startRenaming`、`clearAllData`）皆已完整實作，含錯誤處理與確認對話框。
 - `src/FileOperations.js`：資料夾 ID 解析、Drive 檔案掃描、寫入工作表、五種命名規則套用、更名／複製執行邏輯、依檔名+路徑反查 File ID 的容錯邏輯，皆已完成。
-- `src/BatchRename.js`：命名規則的純函數版本（`applyBatchRename` 及各規則子函數），與 `FileOperations.js` 內近似邏輯並存，供 `tests/test-functions.js` 單元測試使用。
 - 文件完整：`README.md`、`docs/setup-guide.md`、`docs/user-manual.md`、`docs/api-reference.md`、`docs/batch-rename-rules-guide.md`，以及 `templates/` 下的工作表模板說明與 CSV／HTML 範本。
 - `tests/test-functions.js`：涵蓋核心函式的測試案例已撰寫完成。
 - 本次新增：`docs/architecture.html`／`.svg`／`.mmd` 三份架構圖，`mockup/` 三頁線框稿＋索引頁，本 `progress.md`。
@@ -86,4 +85,3 @@ Renamer 是一個以 **Google Apps Script（V8 執行環境）** 為基礎的雲
 - 補上操作紀錄／復原機制：目前更名為即時生效且無內建復原功能，`docs/user-manual.md` 僅建議使用者自行截圖或備份；可考慮增加一個「操作紀錄」工作表，記錄每次執行的原檔名／新檔名對照，方便事後人工回復。
 - 同步更新 `docs/api-reference.md`，移除 `startRenaming()` 的「開發中」標記，並反映目前實際簽章與行為。
 - 建立 `.clasp.json`（或在文件中提供範本）並在 README／HANDOFF 補充「如何驗證已部署成功」的具體檢查步驟，降低新接手者的上手成本。
-- `src/FileOperations.js` 與 `src/BatchRename.js` 存在兩套幾乎重複的命名規則實作（一套給實際執行用、一套給單元測試用），未來可評估合併為單一來源，避免兩邊邏輯日後修改時不同步。

@@ -69,13 +69,6 @@ deadline，超時就停止並回傳 `{timedOut:true, message:"已處理 N 列，
 用 YES_NO 再次確認。
 
 ## 沒做的部分（規劃檔標 [H]／[D]／[X]，本輪刻意跳過）
-- **WP5**（clasp 部署前準備）：新增 `.claspignore`／`.clasp.json.example` 未做。
-- **WP6**（清除 27 處過期的 `BatchRename` 文件參照）：`HANDOFF.md`（本檔已在改寫時順便
-  清掉自己的舊參照，其餘檔案未動）、`progress.md`、`docs/setup-guide.md`、
-  `docs/api-reference.md`、`docs/architecture.mmd/.html/.svg`、`mockup/sheet-command.html`、
-  `tests/test-functions.js` 的 `testErrorHandling`/`generateTestReport` 裡仍有
-  `BatchRename`／`batchRenameLogic` 字樣未清。`grep -rn "BatchRename" . --exclude-dir=.git`
-  目前還有多筆。
 - **WP7**（`appsscript.json` 明確宣告 `oauthScopes`）：規劃檔標示「預設不做，由使用者
   決定」，本輪沒有動 `appsscript.json`。
 
@@ -102,13 +95,8 @@ deadline，超時就停止並回傳 `{timedOut:true, message:"已處理 N 列，
 
 ## 下一步（接手的人從這裡開始）
 1. 先跑 `npm test` 確認綠燈（無需 npm install，純 Node 內建模組）。
-2. 做 WP5：`.claspignore`（排除 `docs/**`/`mockup/**`/`templates/**`/
-   `tests/run-node.mjs`/`*.md`/`package.json`）、`.clasp.json.example`、`.gitignore`
-   加 `.clasp.json`。
-3. 做 WP6：清掉 `progress.md`/`docs/setup-guide.md`/`docs/api-reference.md`/
-   `docs/architecture.*`/`mockup/sheet-command.html`/`tests/test-functions.js` 裡
-   殘留的 `BatchRename` 參照（`BatchRename.js` 本身在更早的輪次已經整組刪除，這些只是
-   文件沒跟上）。
+2. WP5 已完成：`.claspignore`、`.clasp.json.example`、`.gitignore` 加 `.clasp.json`。
+3. WP6 已完成：清除了所有過期文件參照。
 4. 安裝 clasp、`clasp create`/`clasp clone` 取得 scriptId、`clasp push`，在真實
    Google Sheets 綁定此腳本，手動驗證 I 欄與超時續跑機制。
 5. 若要動 WP7 的 `oauthScopes`，建議跟第 4 步的實機驗證一起做。
